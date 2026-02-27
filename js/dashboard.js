@@ -79,7 +79,7 @@ navItems.forEach(item => {
 
 // ── Logout ─────────────────────────────────────────────────────────────
 let _presenceRef = null;   // stored in populateUser; used for explicit offline on logout
-document.getElementById('btn-logout')?.addEventListener('click', async () => {
+async function _doLogout() {
   try {
     if (_presenceRef) {
       await onDisconnect(_presenceRef).cancel().catch(() => {});
@@ -89,10 +89,11 @@ document.getElementById('btn-logout')?.addEventListener('click', async () => {
     window.dispatchEvent(new CustomEvent('dashboard:logout'));
     await signOut(auth);
   } catch (_err) {
-    // Ensure sign-out happens even if presence cleanup fails
     try { await signOut(auth); } catch (_) {}
   }
-});
+}
+document.getElementById('btn-logout')?.addEventListener('click', _doLogout);
+document.getElementById('mobile-btn-logout')?.addEventListener('click', _doLogout);
 
 // ── Populate user data ─────────────────────────────────────────
 async function populateUser(user) {
@@ -107,6 +108,12 @@ async function populateUser(user) {
 
   // Topbar greeting
   if (greetingName) greetingName.textContent = displayName;
+
+  // Mobile topbar avatar + name
+  const mobileAvatar = document.getElementById('mobile-topbar-avatar');
+  const mobileName   = document.getElementById('mobile-topbar-name');
+  if (mobileAvatar) mobileAvatar.textContent = displayName[0].toUpperCase();
+  if (mobileName)   mobileName.textContent   = displayName;
 
   // ── Profile section ──────────────────────────────────────
   const el = id => document.getElementById(id);

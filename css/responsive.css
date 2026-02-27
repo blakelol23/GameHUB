@@ -1,56 +1,54 @@
 /* ════════════════════════════════════════════════════════════
-   RESPONSIVE.CSS  —  Real-time adaptive layout engine
-   viewport-md (600–899px) and viewport-sm (<600px) classes
-   are toggled by js/responsive.js via ResizeObserver so CSS
-   transitions fire live as you drag the window edge.
+   RESPONSIVE.CSS  —  Adaptive layout engine + Mobile overhaul
+   Breakpoints toggled live by js/responsive.js via ResizeObserver:
+     viewport-lg  ≥ 900px  — full sidebar with labels
+     viewport-md  600–899px — icon-only sidebar
+     viewport-sm  < 600px  — mobile: slim topbar + bottom nav
    ════════════════════════════════════════════════════════════ */
 
 /* ── Smooth transitions on layout-critical elements ─────────── */
-/* These must live here (not in dashboard.css) so they're only
-   active when this stylesheet loads — keeps baseline layout fast. */
-
 .dash-sidebar {
   transition:
     width        0.32s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.28s ease;
 }
-
 .dash-sidebar-brand-text,
 .nav-label {
   overflow   : hidden;
   white-space: nowrap;
   transition : opacity 0.2s ease, max-width 0.28s ease;
-  max-width  : 140px;   /* wide enough to always show full label */
+  max-width  : 140px;
 }
-
 .dash-content {
   transition: padding 0.28s ease;
 }
 
-/* Brief border flash + inner glow when sidebar mode snaps */
+/* Brief border flash when sidebar mode snaps */
 .dash-sidebar.sidebar-snap {
   border-right-color: rgba(0, 212, 255, 0.4) !important;
   box-shadow: inset -3px 0 20px rgba(0, 212, 255, 0.07);
 }
 
+/* ── Mobile-only elements: hidden until viewport-sm ─────────── */
+.mobile-topbar-user,
+.mobile-btn-logout {
+  display: none;
+}
+
 /* ════════════════════════════════════════════════════════════
    LOADING SCREEN
    ════════════════════════════════════════════════════════════ */
-
 @media (max-width: 480px) {
   .loading-content { gap: 16px; }
 }
 
 /* ════════════════════════════════════════════════════════════
    AUTH SCREEN  —  fine-tune below 768px
-   (login.css already hides ls-left at ≤768px)
    ════════════════════════════════════════════════════════════ */
-
 @media (max-width: 480px) {
   .ls-right      { padding: 12px; }
   .terminal-body { padding: 18px 18px 24px; }
 }
-
 @media (max-width: 360px) {
   .terminal-bar     { padding: 8px 12px; }
   .terminal-body    { padding: 14px 14px 20px; }
@@ -62,77 +60,156 @@
 /* ════════════════════════════════════════════════════════════
    DASHBOARD  —  Compact sidebar   (viewport-md: 600–899px)
    ════════════════════════════════════════════════════════════ */
-
-/* Sidebar collapses to icon-only strip */
-#dashboard-screen.viewport-md .dash-sidebar {
-  width: 56px;
-}
-
-/* Brand: hide text label, centre logo */
-#dashboard-screen.viewport-md .dash-sidebar-brand {
-  justify-content: center;
-  padding        : 20px 0 18px;
-  gap            : 0;
-}
-#dashboard-screen.viewport-md .dash-sidebar-brand-text {
-  opacity  : 0;
-  max-width: 0;
-  margin   : 0;
-}
-
-/* Nav items: icon centred, label invisible */
-#dashboard-screen.viewport-md .dash-nav-item {
-  justify-content: center;
-  padding        : 10px 0;
-  gap            : 0;
-}
-#dashboard-screen.viewport-md .nav-label {
-  opacity  : 0;
-  max-width: 0;
-}
-#dashboard-screen.viewport-md .dash-nav-separator {
-  margin: 6px 10px;
-}
-
-/* Tighten layout */
-#dashboard-screen.viewport-md .dash-content {
-  padding: 22px 20px 40px;
-}
-#dashboard-screen.viewport-md .dash-topbar {
-  padding: 0 20px;
-}
+#dashboard-screen.viewport-md .dash-sidebar        { width: 56px; }
+#dashboard-screen.viewport-md .dash-sidebar-brand  { justify-content: center; padding: 20px 0 18px; gap: 0; }
+#dashboard-screen.viewport-md .dash-sidebar-brand-text { opacity: 0; max-width: 0; margin: 0; }
+#dashboard-screen.viewport-md .dash-nav-item       { justify-content: center; padding: 10px 0; gap: 0; }
+#dashboard-screen.viewport-md .nav-label           { opacity: 0; max-width: 0; }
+#dashboard-screen.viewport-md .dash-nav-separator  { margin: 6px 10px; }
+#dashboard-screen.viewport-md .dash-content        { padding: 22px 20px 40px; }
+#dashboard-screen.viewport-md .dash-topbar         { padding: 0 20px; }
+#dashboard-screen.viewport-md .dash-sidebar-collapse-btn { display: none; }
 
 /* ════════════════════════════════════════════════════════════
-   DASHBOARD  —  Mobile bottom nav   (viewport-sm: <600px)
+   DASHBOARD  —  Mobile   (viewport-sm: <600px)
+   Slim glassy topbar + glowing animated bottom nav
    ════════════════════════════════════════════════════════════ */
 
-/* Stack children: main on top, sidebar becomes bottom bar */
+/* ── Root layout ──────────────────────────────────────────────── */
 #dashboard-screen.viewport-sm {
   flex-direction: column;
 }
 #dashboard-screen.viewport-sm .dash-main {
-  order    : 1;
-  min-height: 0;
-  flex     : 1;
+  order         : 1;
+  min-height    : 0;
+  flex          : 1;
+  /* Pad below fixed bottom nav (64px) + device safe area */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+#dashboard-screen.viewport-sm .dash-sidebar-collapse-btn { display: none; }
+
+/* ── Topbar ───────────────────────────────────────────────────── */
+#dashboard-screen.viewport-sm .dash-topbar {
+  height  : 52px;
+  padding : 0 14px;
+  gap     : 8px;
 }
 
-/* Sidebar → bottom navigation bar */
-#dashboard-screen.viewport-sm .dash-sidebar {
-  order         : 2;
-  width         : 100%;
-  height        : 58px;
-  flex-direction: row;
-  flex-shrink   : 0;
-  border-right  : none;
-  border-top    : 1px solid var(--dash-border);
-  transition    : none;
+/* Hide desktop-only topbar items */
+#dashboard-screen.viewport-sm .dash-breadcrumb-root,
+#dashboard-screen.viewport-sm .dash-breadcrumb-sep {
+  display: none;
 }
+#dashboard-screen.viewport-sm .dash-breadcrumb-current {
+  font-size     : 13px;
+  letter-spacing: 0.14em;
+}
+#dashboard-screen.viewport-sm .dash-user-badge,
+#dashboard-screen.viewport-sm .dash-status-dot {
+  display: none;
+}
+
+/* Mobile user chip (avatar + name) */
+#dashboard-screen.viewport-sm .mobile-topbar-user {
+  display    : flex;
+  align-items: center;
+  gap        : 6px;
+}
+
+.mobile-topbar-avatar {
+  width          : 28px;
+  height         : 28px;
+  border-radius  : 50%;
+  background     : rgba(var(--accent-rgb), 0.1);
+  border         : 1px solid rgba(var(--accent-rgb), 0.28);
+  color          : var(--dash-accent);
+  font-size      : 11px;
+  font-weight    : 700;
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  text-transform : uppercase;
+  flex-shrink    : 0;
+  text-shadow    : 0 0 8px rgba(var(--accent-rgb), 0.4);
+}
+
+.mobile-topbar-name {
+  font-size    : 11px;
+  letter-spacing: 0.06em;
+  color        : var(--dash-text);
+  max-width    : 84px;
+  overflow     : hidden;
+  text-overflow: ellipsis;
+  white-space  : nowrap;
+}
+
+/* Mobile sign-out button in topbar */
+#dashboard-screen.viewport-sm .mobile-btn-logout {
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  width          : 36px;
+  height         : 36px;
+  min-width      : 36px;
+  border-radius  : 7px;
+  background     : rgba(255, 77, 106, 0.07);
+  border         : 1px solid rgba(255, 77, 106, 0.18);
+  color          : rgba(255, 77, 106, 0.65);
+  cursor         : pointer;
+  transition     : background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+  flex-shrink    : 0;
+  touch-action   : manipulation;
+}
+#dashboard-screen.viewport-sm .mobile-btn-logout svg {
+  width : 15px;
+  height: 15px;
+  stroke-width: 2;
+}
+#dashboard-screen.viewport-sm .mobile-btn-logout:active {
+  background  : rgba(255, 77, 106, 0.18);
+  border-color: rgba(255, 77, 106, 0.5);
+  color       : #ff4d6a;
+  transform   : scale(0.91);
+}
+
+/* Notification bell — bigger tap target on mobile */
+#dashboard-screen.viewport-sm .notif-bell-btn {
+  font-size : 17px;
+  min-width : 36px;
+  min-height: 36px;
+  padding   : 0 4px;
+}
+
+/* ── Bottom navigation bar ────────────────────────────────────── */
+#dashboard-screen.viewport-sm .dash-sidebar {
+  order             : 2;
+  position          : fixed;
+  bottom            : 0;
+  left              : 0;
+  right             : 0;
+  width             : 100%;
+  height            : calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom    : env(safe-area-inset-bottom, 0px);
+  flex-direction    : row;
+  flex-shrink       : 0;
+  border-right      : none;
+  border-top        : 1px solid rgba(var(--accent-rgb), 0.07);
+  background        : rgba(7, 8, 12, 0.95);
+  backdrop-filter   : blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  transition        : none;
+  z-index           : 100;
+  box-shadow        : 0 -1px 0 rgba(var(--accent-rgb), 0.04),
+                      0 -12px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Hide sidebar header & footer on mobile (sign-out is in topbar) */
 #dashboard-screen.viewport-sm .dash-sidebar-brand,
 #dashboard-screen.viewport-sm .dash-sidebar-footer {
   display: none;
 }
 
-/* Horizontal nav list */
+/* Horizontal tab list */
 #dashboard-screen.viewport-sm .dash-nav {
   flex-direction : row;
   align-items    : stretch;
@@ -141,76 +218,160 @@
   gap            : 0;
   flex           : 1;
 }
-/* Separator → vertical divider */
+
+/* Remove separator lines (cleaner on mobile) */
 #dashboard-screen.viewport-sm .dash-nav-separator {
-  width     : 1px;
-  height    : auto;
-  background: var(--dash-border);
-  margin    : 10px 0;
-  align-self: stretch;
+  display: none;
 }
 
-/* Each tab item */
+/* ── Individual tab ──────────────────────────────────────────── */
 #dashboard-screen.viewport-sm .dash-nav-item {
   flex           : 1;
   flex-direction : column;
   align-items    : center;
   justify-content: center;
-  gap            : 4px;
-  padding        : 5px 4px;
+  gap            : 3px;
+  padding        : 8px 2px 6px;
+  min-height     : 44px;   /* WCAG minimum touch target */
   border-radius  : 0;
   border         : none;
-  border-top     : 2px solid transparent;
   background     : transparent !important;
   box-shadow     : none !important;
   text-shadow    : none;
-  transition     : color 0.18s, border-color 0.18s;
+  color          : var(--dash-text-faint);
+  position       : relative;
+  transition     : color 0.2s ease;
+  touch-action   : manipulation;
 }
+
+/* Glowing pill indicator at top of active tab */
+#dashboard-screen.viewport-sm .dash-nav-item::before {
+  content      : '';
+  position     : absolute;
+  top          : 0;
+  left         : 50%;
+  transform    : translateX(-50%) scaleX(0);
+  width        : 24px;
+  height       : 2px;
+  border-radius: 0 0 3px 3px;
+  background   : var(--dash-accent);
+  box-shadow   : 0 0 10px rgba(var(--accent-rgb), 0.8),
+                 0 0 20px rgba(var(--accent-rgb), 0.3);
+  transition   : transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+                 opacity 0.2s ease;
+  opacity      : 0;
+}
+
+/* Active state */
 #dashboard-screen.viewport-sm .dash-nav-item.active {
-  border-top: 2px solid var(--dash-accent);
-  color     : var(--dash-accent);
+  color: var(--dash-accent);
 }
+#dashboard-screen.viewport-sm .dash-nav-item.active::before {
+  transform: translateX(-50%) scaleX(1);
+  opacity  : 1;
+}
+
+/* Icon: slightly bigger + glows on active */
 #dashboard-screen.viewport-sm .dash-nav-item svg {
-  width : 17px;
-  height: 17px;
+  width      : 20px;
+  height     : 20px;
+  transition : transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+               filter 0.2s ease;
+}
+#dashboard-screen.viewport-sm .dash-nav-item.active svg {
+  transform: translateY(-1px) scale(1.08);
+  filter   : drop-shadow(0 0 5px rgba(var(--accent-rgb), 0.65));
 }
 
-/* Tiny label below icon on mobile */
+/* Touch press feedback */
+#dashboard-screen.viewport-sm .dash-nav-item:active svg {
+  transform: scale(0.88);
+}
+
+/* Label under icon */
 #dashboard-screen.viewport-sm .nav-label {
-  opacity       : 1;
-  max-width     : 60px;
-  font-size     : 8px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  overflow      : hidden;
-  white-space   : nowrap;
+  opacity        : 1;
+  max-width      : 60px;
+  font-size      : 8.5px;
+  letter-spacing : 0.03em;
+  text-transform : uppercase;
+  overflow       : hidden;
+  white-space    : nowrap;
+  transition     : color 0.2s;
 }
 
-/* Compact topbar */
-#dashboard-screen.viewport-sm .dash-topbar {
-  padding: 0 14px;
-  gap    : 8px;
-}
-#dashboard-screen.viewport-sm .dash-breadcrumb-root,
-#dashboard-screen.viewport-sm .dash-breadcrumb-sep {
-  display: none;
-}
-#dashboard-screen.viewport-sm .dash-user-badge-label {
-  display: none;
-}
-
-/* Tighter content */
+/* ── Content area ─────────────────────────────────────────────── */
 #dashboard-screen.viewport-sm .dash-content {
   padding: 16px 14px 20px;
+  -webkit-overflow-scrolling: touch;
 }
 #dashboard-screen.viewport-sm .section-head {
   margin-bottom: 16px;
 }
 #dashboard-screen.viewport-sm .section-head-title {
+  font-size: 16px;
+}
+
+/* Cards: tighter padding on small screens */
+#dashboard-screen.viewport-sm .dash-card {
+  padding: 16px;
+}
+
+/* Settings: full width */
+#dashboard-screen.viewport-sm .settings-layout {
+  max-width: 100%;
+}
+
+/* Buttons and inputs: comfortable touch targets */
+#dashboard-screen.viewport-sm .dash-btn {
+  min-height: 44px;
+  font-size : 12px;
+  padding   : 10px 16px;
+}
+#dashboard-screen.viewport-sm .dash-input {
+  /* ≥16px prevents iOS auto-zoom on focus */
+  font-size : 16px;
+  min-height: 44px;
+  padding   : 11px 12px;
+}
+
+/* Messages: no extra bottom padding (layout handles it) */
+#dashboard-screen.viewport-sm .dash-content.section-messages-active {
+  padding-bottom: 0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   CONTENT-AREA responsive classes (set by responsive.js)
+   ════════════════════════════════════════════════════════════ */
+.content-sm .profile-layout,
+.content-sm .friends-layout,
+.content-sm .settings-layout {
+  grid-template-columns: 1fr !important;
+}
+.content-md .profile-layout {
+  grid-template-columns: 220px 1fr;
+}
+.content-sm .section-head-title {
   font-size: 15px;
 }
 
-/* Settings full-width on mobile */
-#dashboard-screen.viewport-sm .settings-layout {
-  max-width: 100%;
+/* Messages back button */
+.msg-back-btn {
+  display        : none;
+  background     : none;
+  border         : none;
+  color          : var(--dash-accent);
+  cursor         : pointer;
+  padding        : 4px 6px;
+  margin-right   : 6px;
+  border-radius  : 4px;
+  flex-shrink    : 0;
+  min-height     : 44px;
+  min-width      : 44px;
+  align-items    : center;
+  justify-content: center;
+}
+.viewport-sm .msg-back-btn,
+.content-sm  .msg-back-btn {
+  display: flex;
 }
