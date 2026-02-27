@@ -43,7 +43,7 @@ const infoBtn        = document.getElementById('info-btn');
 const infoOverlay    = document.getElementById('info-overlay');
 const infoClose      = document.getElementById('info-close');
 
-let bgParticles = [], heroDust = [], heroT = 0;
+let bgParticles = [], bgStars = [], heroDust = [], heroT = 0;
 let mouse = { x: -9999, y: -9999 };
 
 // Sphere direction, speed & color blend — manipulated during panel transitions
@@ -75,8 +75,49 @@ function initBgParticles() {
   bgParticles = Array.from({ length: BG_CFG.count }, makeBgParticle);
 }
 
+function initBgStars() {
+  bgStars = Array.from({ length: 90 }, () => ({
+    x         : Math.random() * bgCanvas.width,
+    y         : Math.random() * bgCanvas.height,
+    r         : 0.18 + Math.random() * 0.78,
+    phase     : Math.random() * Math.PI * 2,
+    freq      : 0.003 + Math.random() * 0.010,
+    baseAlpha : 0.07 + Math.random() * 0.26,
+    color     : Math.random() > 0.82 ? '0,212,255'
+              : Math.random() > 0.65 ? '160,130,255'
+              : '218,228,248',
+    sparkle   : Math.random() > 0.82,  // ~18% of stars occasionally flash
+    sparkPhase: Math.random() * Math.PI * 2,
+  }));
+}
+
 function drawBg() {
   bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+  // ── Twinkling star field ──────────────────────────────────
+  for (const s of bgStars) {
+    s.phase += s.freq;
+    let a = s.baseAlpha * (0.35 + 0.65 * Math.sin(s.phase));
+    if (s.sparkle) {
+      s.sparkPhase += 0.007;
+      const amp = Math.max(0, Math.sin(s.sparkPhase * 1.9) - 0.88) * 7;
+      a = Math.min(0.92, a + amp);
+      if (amp > 0.08) {        // draw 4-point cross for flashing stars
+        const len = s.r * 4.5 * amp;
+        bgCtx.beginPath();
+        bgCtx.moveTo(s.x - len, s.y); bgCtx.lineTo(s.x + len, s.y);
+        bgCtx.moveTo(s.x, s.y - len); bgCtx.lineTo(s.x, s.y + len);
+        bgCtx.strokeStyle = `rgba(${s.color},${(a * 0.55).toFixed(3)})`;
+        bgCtx.lineWidth = 0.45;
+        bgCtx.stroke();
+      }
+    }
+    bgCtx.beginPath();
+    bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    bgCtx.fillStyle = `rgba(${s.color},${a.toFixed(3)})`;
+    bgCtx.fill();
+  }
+
   for (const p of bgParticles) {
     const dx = p.x - mouse.x, dy = p.y - mouse.y;
     const d  = Math.hypot(dx, dy);
@@ -169,6 +210,16 @@ function heroFrame() {
     if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
     heroCtx.beginPath(); heroCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     heroCtx.fillStyle = `rgba(${p.color},${p.alpha})`; heroCtx.fill();
+    // Sparkle cross for larger dust particles
+    if (p.r > 0.82) {
+      const len = p.r * 3.5;
+      heroCtx.beginPath();
+      heroCtx.moveTo(p.x - len, p.y); heroCtx.lineTo(p.x + len, p.y);
+      heroCtx.moveTo(p.x, p.y - len); heroCtx.lineTo(p.x, p.y + len);
+      heroCtx.strokeStyle = `rgba(${p.color},${(p.alpha * 0.45).toFixed(3)})`;
+      heroCtx.lineWidth = 0.42;
+      heroCtx.stroke();
+    }
   }
   requestAnimationFrame(heroFrame);
 }
@@ -478,8 +529,8 @@ window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.cli
 
 function init() {
   resizeBg(); resizeHero();
-  window.addEventListener('resize', () => { resizeBg(); initBgParticles(); resizeHero(); });
-  initBgParticles(); drawBg();
+  window.addEventListener('resize', () => { resizeBg(); initBgParticles(); initBgStars(); resizeHero(); });
+  initBgParticles(); initBgStars(); drawBg();
   initHeroDust(); heroFrame();
   // Restore remembered email
   const saved = localStorage.getItem('gamehub_remembered_email');
@@ -516,6 +567,7 @@ function reinitForLogout() {
   resizeBg();
   resizeHero();
   initBgParticles();
+  initBgStars();
   initHeroDust();
 
   // 5. Reset login form to a pristine state
