@@ -1,6 +1,7 @@
-# ─── Firebase credentials — NEVER commit the real config ─────────────────────
-# Copy js/firebase-config.example.js → js/firebase-config.js and fill in values.
-js/firebase-config.js
+# firebase-config.js is intentionally committed — Firebase web API keys are
+# public identifiers (not secrets). Security is enforced by Firebase Rules +
+# API key HTTP-referrer restrictions in Google Cloud Console.
+# js/firebase-config.js  ← intentionally NOT ignored for GitHub Pages deployment
 
 # ─── OS / editor noise ───────────────────────────────────────────────────────
 .DS_Store
