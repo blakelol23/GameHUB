@@ -1,0 +1,120 @@
+﻿{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        "username"    : { ".read": "auth != null" },
+        "avatarColor" : { ".read": "auth != null" },
+        "avatarPhoto" : { ".read": "auth != null" },
+        "role"        : { ".read": "auth != null" },
+        "bio"         : { ".read": "auth != null" },
+        "createdAt"   : { ".read": "auth != null" }
+      }
+    },
+
+    "usernames": {
+      "$username": {
+        ".read" : "auth != null",
+        ".write": "auth != null && (!data.exists() || data.val() == auth.uid)"
+      }
+    },
+
+    "conversations": {
+      "$convId": {
+        ".read" : "auth != null && ($convId.contains(auth.uid))",
+        ".write": "auth != null && ($convId.contains(auth.uid))",
+        "messages": {
+          ".indexOn": ["ts"],
+          "$msgId": {
+            ".validate": "newData.hasChildren(['from','text','ts']) && newData.child('from').val() == auth.uid && newData.child('text').val().length >= 1 && newData.child('text').val().length <= 2000"
+          }
+        }
+      }
+    },
+
+    "user_conversations": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null"
+      }
+    },
+
+    "presence": {
+      "$uid": {
+        ".read" : "auth != null",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
+    "sentinel_logs": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null"
+      }
+    },
+
+    "user_prefs": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+
+    "friends": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        "$otherUid": {
+          ".write": "auth != null && (auth.uid == $uid || auth.uid == $otherUid)"
+        }
+      }
+    },
+
+    "friend_requests": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null"
+      }
+    },
+
+    "sent_requests": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        "$targetUid": {
+          ".write": "auth != null && (auth.uid == $uid || auth.uid == $targetUid)"
+        }
+      }
+    },
+
+    "roles": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null && root.child('roles').child(auth.uid).val() === 'OWNER'"
+      }
+    },
+
+    "typing": {
+      "$convId": {
+        ".read": "auth != null && $convId.contains(auth.uid)",
+        "$uid": {
+          ".write": "auth != null && auth.uid == $uid"
+        }
+      }
+    },
+
+    "notifications": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null",
+        ".indexOn": ["ts"]
+      }
+    },
+
+    "game_stats": {
+      "$uid": {
+        ".read" : "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    }
+  }
+}

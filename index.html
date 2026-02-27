@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Hub</title>
+  <link rel="icon" type="image/png" href="img/GHLOGO.png" />
+  <link rel="stylesheet" href="css/shared.css" />
+  <link rel="stylesheet" href="css/loading.css" />
+  <!-- Auth -->
+  <link rel="stylesheet" href="css/auth/login.css" />
+  <link rel="stylesheet" href="css/auth/register.css" />
+  <!-- Dashboard -->
+  <link rel="stylesheet" href="css/dashboard/dashboard.css" />
+  <link rel="stylesheet" href="css/dashboard/overview.css" />
+  <link rel="stylesheet" href="css/dashboard/games.css" />
+  <link rel="stylesheet" href="css/dashboard/profile.css" />
+  <link rel="stylesheet" href="css/dashboard/friends.css" />
+  <link rel="stylesheet" href="css/dashboard/settings.css" />
+  <link rel="stylesheet" href="css/dashboard/messages.css" />
+  <!-- New feature styles -->
+  <link rel="stylesheet" href="css/dashboard/notifications.css" />
+  <link rel="stylesheet" href="css/dashboard/context-menu.css" />
+  <link rel="stylesheet" href="css/dashboard/profile-modal.css" />
+  <link rel="stylesheet" href="css/dashboard/game-viewer.css" />
+  <!-- Responsive adaptive layout -->
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════
+       LOADING SCREEN
+  ══════════════════════════════════════════════════════ -->
+  <div id="loading-screen" class="loading-screen" role="main" aria-label="Game Hub loading">
+
+    <canvas id="particle-canvas" class="loading-canvas" aria-hidden="true"></canvas>
+    <div class="loading-vignette"  aria-hidden="true"></div>
+    <div class="loading-bg-rays"   aria-hidden="true"></div>
+    <div class="loading-bg-hex"    aria-hidden="true"></div>
+    <div class="loading-scan-line" aria-hidden="true"></div>
+
+    <!-- Corner HUD data panels -->
+    <div class="loading-hud loading-hud--tl" aria-hidden="true">
+      <span class="hud-label">SYS</span>
+      <span class="hud-value">GH_OS v2.4</span>
+      <span class="hud-value">NODE_01</span>
+    </div>
+    <div class="loading-hud loading-hud--tr" aria-hidden="true">
+      <span class="hud-label">STATUS</span>
+      <span class="hud-value" id="hud-status-val">BOOT</span>
+      <span class="hud-value">SEC:ACTIVE</span>
+    </div>
+    <div class="loading-hud loading-hud--bl" aria-hidden="true">
+      <span class="hud-value">[00-212-255]</span>
+      <span class="hud-value">CHN:SECURE</span>
+    </div>
+    <div class="loading-hud loading-hud--br" aria-hidden="true">
+      <span class="hud-value" id="hud-pct-mirror">0%</span>
+      <span class="hud-value">LOAD:ACTIVE</span>
+    </div>
+
+    <div class="loading-content" id="loading-content">
+
+      <div class="logo-wrapper" id="logo-wrapper">
+        <div class="logo-ring-seg"                       aria-hidden="true"></div>
+        <div class="logo-ring-seg logo-ring-seg--mid"    aria-hidden="true"></div>
+        <div class="logo-ring-seg logo-ring-seg--outer"  aria-hidden="true"></div>
+        <img src="img/GHLOGO.png" alt="Game Hub Logo" class="logo-img" id="loading-logo" draggable="false" />
+      </div>
+
+      <div class="brand-title" id="brand-title" aria-label="Game Hub">
+        <span class="brand-word brand-word--game">GAME</span>
+        <span class="brand-word brand-word--hub">HUB</span>
+      </div>
+
+      <div class="brand-sub" aria-hidden="true">PLATFORM v2 // EARLY ACCESS</div>
+
+      <div class="status-wrap" id="status-wrap">
+        <span class="status-prompt" aria-hidden="true">&gt;</span>
+        <p class="status-text" id="status-text" aria-live="polite">Initialising systems…</p>
+        <span class="status-cursor" aria-hidden="true"></span>
+      </div>
+
+      <div class="progress-container" id="progress-container">
+        <div class="progress-track"
+             role="progressbar"
+             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Loading progress"
+             id="progress-bar-track">
+          <div class="progress-fill" id="progress-bar-fill">
+            <div class="progress-tip"></div>
+          </div>
+        </div>
+        <span class="progress-percent" id="progress-percent" aria-hidden="true">0%</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       AUTH SCREEN — shared left panel, swappable right panels
+  ══════════════════════════════════════════════════════ -->
+  <div id="auth-screen" class="auth-screen" hidden>
+
+    <div class="ls-left" id="auth-left" aria-hidden="true">
+      <canvas id="hero-canvas" class="hero-canvas"></canvas>
+      <div class="ls-left-overlay"></div>
+      <div class="ls-brand">
+        <img src="img/GHLOGO.png" alt="" class="ls-brand-logo" draggable="false" />
+        <h2 class="ls-brand-title">GAME<span id="brand-accent">HUB</span></h2>
+        <p class="ls-brand-tagline" id="brand-tagline">One hub. Every game. Every player.</p>
+      </div>
+      <div class="ls-edge-line auth-edge-line" id="auth-edge-line" aria-hidden="true"></div>
+
+      <!-- Glitch FX layer -->
+      <div id="globe-glitch-fx" aria-hidden="true"></div>
+
+      <!-- Info trigger -->
+      <button id="info-btn" class="info-btn" aria-label="About GameHub">
+        <svg class="info-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="8" stroke-width="4"/>
+          <line x1="12" y1="12" x2="12" y2="17"/>
+        </svg>
+        <span>ABOUT</span>
+      </button>
+
+      <!-- Info overlay -->
+      <div id="info-overlay" class="info-overlay" hidden aria-hidden="true">
+
+        <!-- Terminal header bar -->
+        <div class="info-ol-bar">
+          <div class="info-ol-dots" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="info-ol-bar-title">GAME_HUB // DATA_ARCHIVE</span>
+          <button id="info-close" class="info-close-btn" aria-label="Close">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+              <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Scrollable body -->
+        <div class="info-ol-body">
+
+          <section class="info-ol-section" style="--delay:0.05s">
+            <h3 class="info-ol-label"><span class="info-ol-label-bar" aria-hidden="true"></span>ABOUT</h3>
+            <p class="info-ol-text">Game Hub is a private social platform for tracking games, messaging friends, and building your gaming identity &mdash; your stats, your crew, your way.</p>
+            <span class="info-ol-badge">EARLY ACCESS</span>
+          </section>
+
+          <div class="info-ol-divider" aria-hidden="true"></div>
+
+          <section class="info-ol-section" style="--delay:0.14s">
+            <h3 class="info-ol-label"><span class="info-ol-label-bar" aria-hidden="true"></span>INSPIRED BY</h3>
+            <div class="info-inspo-list">
+
+              <div class="info-inspo-item" style="--ac:#5865F2">
+                <div class="info-inspo-thumb">
+                  <img src="img/inspo/school-messenger-logo.png" alt="School Messenger" class="info-inspo-img" onerror="this.classList.add('broken')" />
+                </div>
+                <div class="info-inspo-meta">
+                  <span class="info-inspo-name">School Messenger</span>
+                  <span class="info-inspo-role">UI &amp; Community</span>
+                </div>
+              </div>
+
+              <div class="info-inspo-item" style="--ac:#E8441A">
+                <div class="info-inspo-thumb">
+                  <img src="img/inspo/ALL-IN-ONE logo.png" alt="All-In-One Evolved" class="info-inspo-img" onerror="this.classList.add('broken')" />
+                </div>
+                <div class="info-inspo-meta">
+                  <span class="info-inspo-name">All-In-One Evolved</span>
+                  <span class="info-inspo-role">Game Library</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="info-ol-divider" aria-hidden="true"></div>
+
+          <section class="info-ol-section" style="--delay:0.23s">
+            <h3 class="info-ol-label"><span class="info-ol-label-bar" aria-hidden="true"></span>SUPPORT</h3>
+            <p class="info-ol-text">Running into issues or have feedback? Reach out directly.</p>
+            <a href="mailto:support@example.com" class="info-ol-email-btn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              thefloorguysofficial@gmail.com
+            </a>
+          </section>
+
+        </div>
+
+        <!-- Sentinel security footer -->
+        <div class="info-sentinel-bar">
+          <img src="img/sentinel-v2-logo.png" alt="Sentinel" class="info-sentinel-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+          <svg class="info-sentinel-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Protected by <strong>Sentinel V2</strong></span>
+          <span class="info-sentinel-status">
+            <span class="info-sentinel-dot" aria-hidden="true"></span>ACTIVE
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="ls-right auth-right">
+      <canvas id="login-particle-canvas" class="login-bg-canvas" aria-hidden="true"></canvas>
+
+      <!-- ── Login panel ───────────────────────────────── -->
+      <div class="auth-panel" id="panel-login">
+      <div class="ls-terminal" id="login-card" role="dialog" aria-label="Game Hub login" aria-modal="true">
+
+        <div class="terminal-bar">
+          <div class="terminal-dots" aria-hidden="true">
+            <span class="t-dot t-dot--r"></span>
+            <span class="t-dot t-dot--y"></span>
+            <span class="t-dot t-dot--g"></span>
+          </div>
+          <span class="terminal-id">GAME_HUB // ACCESS_PORTAL</span>
+          <span class="terminal-blink" aria-hidden="true">_</span>
+        </div>
+
+        <div class="terminal-body">
+          <p class="terminal-heading">IDENTITY VERIFICATION</p>
+          <p class="terminal-sub">Enter credentials to continue</p>
+
+          <form id="login-form" class="login-form" novalidate autocomplete="on">
+
+            <div class="field-group" id="field-email">
+              <label class="field-label" for="login-email">// Email</label>
+              <div class="field-wrap">
+                <input
+                  type="email" id="login-email" name="email"
+                  class="field-input" placeholder="user@example.com"
+                  autocomplete="email" spellcheck="false" maxlength="254" required />
+              </div>
+              <span class="field-error" id="error-email" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="field-group" id="field-password">
+              <label class="field-label" for="login-password">// Password</label>
+              <div class="field-wrap">
+                <input
+                  type="password" id="login-password" name="password"
+                  class="field-input" placeholder="••••••••"
+                  autocomplete="current-password" maxlength="128" required />
+                <button type="button" class="toggle-password" id="toggle-password" aria-label="Show password">
+                  <svg class="eye-icon eye-icon--show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-icon eye-icon--hide" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+              <span class="field-error" id="error-password" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="form-row-options">
+              <label class="checkbox-label" for="remember-me">
+                <input type="checkbox" id="remember-me" name="remember-me" class="checkbox-input" />
+                <span class="checkbox-custom" aria-hidden="true"></span>
+                <span class="checkbox-text">Remember me</span>
+              </label>
+              <a href="#" class="forgot-link" id="forgot-link">Forgot password?</a>
+            </div>
+              <div class="forgot-status" id="forgot-status" hidden></div>
+
+            <div class="form-error-global" id="form-error-global" role="alert" aria-live="assertive" hidden></div>
+
+            <button type="submit" class="btn-login" id="btn-login">
+              <span class="btn-scan" aria-hidden="true"></span>
+              <span class="btn-label" id="btn-label">SIGN IN</span>
+              <span class="btn-spinner" id="btn-spinner" aria-hidden="true" hidden>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </span>
+              <span class="btn-ripple" id="btn-ripple" aria-hidden="true"></span>
+            </button>
+
+          </form>
+
+          <div class="card-footer">
+            <span class="card-footer-text">No account?</span>
+            <a href="#" class="card-footer-link" id="go-register">Register here</a>
+          </div>
+
+        </div>
+      </div>
+
+      </div><!-- /panel-login -->
+
+      <div class="auth-panel auth-panel--hidden" id="panel-register" aria-hidden="true">
+      <div class="ls-terminal reg-terminal" id="register-card" role="dialog" aria-label="Create account" aria-modal="true">
+
+        <div class="terminal-bar">
+          <div class="terminal-dots" aria-hidden="true">
+            <span class="t-dot t-dot--r"></span>
+            <span class="t-dot t-dot--y"></span>
+            <span class="t-dot t-dot--g"></span>
+          </div>
+          <span class="terminal-id">GAME_HUB // NEW_ACCOUNT</span>
+          <span class="terminal-blink" aria-hidden="true">_</span>
+        </div>
+
+        <div class="terminal-body">
+          <p class="terminal-heading">CREATE ACCOUNT</p>
+          <p class="terminal-sub">Set up your Game Hub identity</p>
+
+          <form id="register-form" class="login-form" novalidate autocomplete="off">
+
+            <div class="field-group" id="reg-field-username">
+              <label class="field-label" for="reg-username">// Username</label>
+              <div class="field-wrap">
+                <input
+                  type="text" id="reg-username" name="username"
+                  class="field-input" placeholder="choose_a_username"
+                  autocomplete="off" spellcheck="false" maxlength="32" required />
+                <span class="field-status" id="username-status" aria-live="polite" aria-hidden="true"></span>
+              </div>
+              <span class="field-error" id="reg-error-username" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="field-group" id="reg-field-email">
+              <label class="field-label" for="reg-email">// Email</label>
+              <div class="field-wrap">
+                <input
+                  type="email" id="reg-email" name="email"
+                  class="field-input" placeholder="user@example.com"
+                  autocomplete="off" spellcheck="false" maxlength="254" required />
+              </div>
+              <span class="field-error" id="reg-error-email" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="field-group" id="reg-field-password">
+              <label class="field-label" for="reg-password">// Password</label>
+              <div class="field-wrap">
+                <input
+                  type="password" id="reg-password" name="password"
+                  class="field-input" placeholder="min. 8 characters"
+                  autocomplete="new-password" maxlength="128" required />
+                <button type="button" class="toggle-password" id="reg-toggle-password" aria-label="Show password">
+                  <svg class="eye-icon eye-icon--show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="eye-icon eye-icon--hide" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="password-strength" id="password-strength" aria-hidden="true">
+                <div class="strength-bar" id="strength-bar"></div>
+              </div>
+              <span class="field-error" id="reg-error-password" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="field-group" id="reg-field-confirm">
+              <label class="field-label" for="reg-confirm">// Confirm Password</label>
+              <div class="field-wrap">
+                <input
+                  type="password" id="reg-confirm" name="confirm"
+                  class="field-input" placeholder="••••••••"
+                  autocomplete="new-password" maxlength="128" required />
+              </div>
+              <span class="field-error" id="reg-error-confirm" role="alert" aria-live="polite"></span>
+            </div>
+
+            <div class="form-error-global" id="reg-form-error" role="alert" aria-live="assertive" hidden></div>
+
+            <button type="submit" class="btn-login btn-register" id="btn-register">
+              <span class="btn-scan" aria-hidden="true"></span>
+              <span class="btn-label" id="reg-btn-label">CREATE ACCOUNT</span>
+              <span class="btn-spinner" id="reg-btn-spinner" aria-hidden="true" hidden>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </span>
+              <span class="btn-ripple" id="reg-btn-ripple" aria-hidden="true"></span>
+            </button>
+
+          </form>
+
+          <div class="card-footer">
+            <span class="card-footer-text">Have an account?</span>
+            <a href="#" class="card-footer-link" id="go-login">Sign in here</a>
+          </div>
+
+        </div>
+      </div>
+      </div><!-- /panel-register -->
+    </div><!-- /auth-right -->
+
+  </div><!-- /auth-screen -->
+
+  <!-- ══════════════════════════════════════════════════════
+       DASHBOARD SCREEN
+  ══════════════════════════════════════════════════════ -->
+  <div id="dashboard-screen" hidden aria-label="Game Hub Dashboard">
+
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <nav class="dash-sidebar" aria-label="Main navigation">
+
+      <div class="dash-sidebar-brand">
+        <img src="img/GHLOGO.png" alt="Game Hub" class="dash-sidebar-brand-img" id="sidebar-brand-logo" draggable="false" title="Toggle sidebar" />
+        <span class="dash-sidebar-brand-text">GAME HUB</span>
+      </div>
+
+      <ul class="dash-nav" role="list">
+        <li class="dash-nav-item active" data-section="overview" role="listitem" tabindex="0" aria-label="Overview">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="nav-label">Overview</span>
+        </li>
+        <li class="dash-nav-item" data-section="games" role="listitem" tabindex="0" aria-label="Games">
+          <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5"/><path d="M16 10v4M14 12h4"/></svg>
+          <span class="nav-label">Games</span>
+        </li>
+        <li class="dash-nav-item" data-section="profile" role="listitem" tabindex="0" aria-label="Profile">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span class="nav-label">Profile</span>
+        </li>
+        <li class="dash-nav-item" data-section="friends" role="listitem" tabindex="0" aria-label="Friends">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 3-5.5 7-5.5s7 2.5 7 5.5"/><circle cx="18" cy="8" r="2.5"/><path d="M18 13.5c2.5 0 4.5 1.8 4.5 4"/></svg>
+          <span class="nav-label">Friends</span>
+        </li>
+        <li class="dash-nav-item" data-section="messages" role="listitem" tabindex="0" aria-label="Messages">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="nav-label">Messages</span>
+        </li>
+        <li class="dash-nav-separator" role="separator"></li>
+        <li class="dash-nav-item" data-section="settings" role="listitem" tabindex="0" aria-label="Settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="nav-label">Settings</span>
+        </li>
+      </ul>
+
+      <div class="dash-sidebar-footer">
+        <button class="dash-nav-item dash-nav-item--logout" id="btn-logout" aria-label="Sign out">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span class="nav-label">Sign Out</span>
+        </button>
+      </div>
+
+    </nav><!-- /dash-sidebar -->
+
+    <!-- ── Main area ────────────────────────────────────────── -->
+    <div class="dash-main">
+
+      <!-- Topbar -->
+      <header class="dash-topbar">
+        <div class="dash-topbar-left">
+          <span class="dash-breadcrumb-root">GAME_HUB</span>
+          <span class="dash-breadcrumb-sep">//</span>
+          <span class="dash-breadcrumb-current" id="dash-section-title">Overview</span>
+        </div>
+        <div class="dash-topbar-right">
+          <!-- Notification bell -->
+          <button id="notif-bell-btn" class="notif-bell-btn" aria-label="Notifications" title="Notifications">🔔<span id="notif-bell-badge" class="notif-bell-badge" hidden>0</span></button>
+          <div class="dash-status-dot" title="Connected" aria-label="Online"></div>
+          <div class="dash-user-badge">
+            <span class="dash-user-badge-label">Operator:</span>
+            <span class="dash-user-badge-name" id="dash-greeting-name">—</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Notification panel (slide-in from topbar bell) -->
+      <div id="notif-panel" class="notif-panel" hidden>
+        <div class="notif-panel-header">
+          <span class="notif-panel-title">Notifications</span>
+          <button id="notif-clear-btn">Clear all</button>
+        </div>
+        <div id="notif-panel-list" class="notif-panel-list"></div>
+      </div>
+
+      <!-- Scrollable content -->
+      <main class="dash-content">
+
+        <!-- ══════ OVERVIEW ══════ -->
+        <section class="dash-section active" id="section-overview" aria-label="Overview">
+
+          <!-- Hero banner -->
+          <div class="ov-hero">
+            <div class="ov-hero-av-wrap">
+              <div class="ov-hero-av" id="ov-hero-avatar">O</div>
+            </div>
+            <div class="ov-hero-body">
+              <p class="ov-hero-label">// Welcome back</p>
+              <h1 class="ov-hero-title">
+                Hello, <span id="overview-welcome-name">Operator</span><span
+                  id="ov-role-badge" class="ov-role-badge" hidden></span>
+              </h1>
+              <div class="ov-hero-pills">
+                <span class="ov-pill ov-pill--online">
+                  <span class="ov-dot ov-dot--on"></span>Online
+                </span>
+                <span class="ov-pill" id="ov-session-pill">Session: --</span>
+              </div>
+            </div>
+            <span class="ov-hero-wm" aria-hidden="true">GH</span>
+          </div>
+
+          <!-- Stats row -->
+          <div class="ov-stats">
+            <div class="ov-stat" style="--sc:#00d4ff">
+              <div class="ov-stat-top">
+                <span class="ov-stat-label">Games</span>
+                <svg class="ov-stat-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5"/><path d="M16 10v4M14 12h4"/></svg>
+              </div>
+              <div class="ov-stat-val" id="stat-games-count">0</div>
+              <div class="ov-stat-sub">in library</div>
+            </div>
+            <div class="ov-stat" style="--sc:#a855f7">
+              <div class="ov-stat-top">
+                <span class="ov-stat-label">Friends</span>
+                <svg class="ov-stat-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 3-5.5 7-5.5s7 2.5 7 5.5"/></svg>
+              </div>
+              <div class="ov-stat-val" id="stat-friends-count">0</div>
+              <div class="ov-stat-sub">total friends</div>
+            </div>
+            <div class="ov-stat" style="--sc:#44dd88">
+              <div class="ov-stat-top">
+                <span class="ov-stat-label">Online</span>
+                <svg class="ov-stat-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+              </div>
+              <div class="ov-stat-val" id="stat-online-count">0</div>
+              <div class="ov-stat-sub">online now</div>
+            </div>
+            <div class="ov-stat" style="--sc:#f5a623">
+              <div class="ov-stat-top">
+                <span class="ov-stat-label">Conversations</span>
+                <svg class="ov-stat-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="ov-stat-val" id="stat-convos-count">0</div>
+              <div class="ov-stat-sub">open DMs</div>
+            </div>
+          </div>
+
+          <!-- Two-column: Online Friends + Quick Actions -->
+          <div class="ov-grid">
+            <div class="ov-panel">
+              <div class="ov-panel-head">
+                <span class="section-head-prefix">//</span>
+                <span class="ov-panel-title">Online Friends</span>
+                <span class="ov-count-badge" id="ov-online-badge">0</span>
+              </div>
+              <div class="ov-online-list" id="ov-online-list">
+                <div class="empty-state" style="padding:28px 12px">
+                  <p class="empty-state-sub">No friends online right now.</p>
+                </div>
+              </div>
+            </div>
+            <div class="ov-panel">
+              <div class="ov-panel-head">
+                <span class="section-head-prefix">//</span>
+                <span class="ov-panel-title">Quick Actions</span>
+              </div>
+              <div class="ov-actions">
+                <button class="ov-action-btn" data-goto="games">
+                  <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5"/><path d="M16 10v4M14 12h4"/></svg>
+                  <span>Browse Games</span>
+                </button>
+                <button class="ov-action-btn" data-goto="friends">
+                  <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 3-5.5 7-5.5s7 2.5 7 5.5"/><path d="M19 8v6M16 11h6"/></svg>
+                  <span>Add Friend</span>
+                </button>
+                <button class="ov-action-btn" data-goto="messages">
+                  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span>Messages</span>
+                </button>
+                <button class="ov-action-btn" data-goto="profile">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  <span>My Profile</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity feed -->
+          <div class="ov-panel">
+            <div class="ov-panel-head">
+              <span class="section-head-prefix">//</span>
+              <span class="ov-panel-title">Recent Activity</span>
+            </div>
+            <div class="activity-feed" id="activity-feed"></div>
+          </div>
+
+          <!-- Now Playing (friends in a game — hidden until populated) -->
+          <div class="ov-panel" id="ov-now-playing-panel" hidden>
+            <div class="ov-panel-head">
+              <span class="section-head-prefix">//</span>
+              <span class="ov-panel-title">Now Playing</span>
+              <span class="ov-live-pip" aria-hidden="true"></span>
+              <span class="ov-live-label">LIVE</span>
+              <span class="ov-count-badge" id="ov-playing-badge">0</span>
+            </div>
+            <div class="ov-playing-list" id="ov-playing-list"></div>
+          </div>
+
+          <!-- Recently Played -->
+          <div class="ov-panel">
+            <div class="ov-panel-head">
+              <span class="section-head-prefix">//</span>
+              <span class="ov-panel-title">Recently Played</span>
+              <button class="ov-panel-action-btn" onclick="document.querySelector('.dash-nav-item[data-section=\'games\']')?.click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><circle cx="8" cy="12" r="1.5"/><path d="M16 10v4M14 12h4"/></svg>
+                All Games
+              </button>
+            </div>
+            <div class="ov-recently-list" id="ov-recently-list">
+              <div class="ov-recently-empty">No games played yet. <button class="ov-recently-cta" onclick="document.querySelector('.dash-nav-item[data-section=\'games\']')?.click()">Browse Games →</button></div>
+            </div>
+          </div>
+
+        </section><!-- /section-overview -->
+
+        <!-- ══════ GAMES ══════ -->
+        <section class="dash-section" id="section-games" aria-label="Game Library">
+
+          <div class="section-head">
+            <div class="section-head-row">
+              <span class="section-head-prefix">//</span>
+              <span class="section-head-title">Game Library</span>
+            </div>
+            <p class="section-head-sub">Your collection of games. Add new entries in <code>js/games/games.js</code>.</p>
+          </div>
+
+          <div class="games-filter-bar">
+            <div class="games-search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="search" class="games-search" id="games-search" placeholder="Search games…" autocomplete="off" />
+            </div>
+          </div>
+
+          <p class="games-count"><span id="games-count-num">0</span> games in library</p>
+
+          <div class="games-grid" id="games-grid"></div>
+
+        </section><!-- /section-games -->
+
+        <!-- ══════ PROFILE ══════ -->
+        <section class="dash-section" id="section-profile" aria-label="Profile">
+
+          <div class="section-head">
+            <div class="section-head-row">
+              <span class="section-head-prefix">//</span>
+              <span class="section-head-title">Profile</span>
+            </div>
+          </div>
+
+          <div class="profile-layout">
+
+            <!-- ID Card -->
+            <div class="profile-id-card dash-card">
+              <div class="profile-avatar" id="profile-avatar-letter" aria-hidden="true" title="Click to change avatar photo">?</div>
+              <input type="file" id="avatar-file-input" accept="image/*" hidden />
+              <p class="profile-username" id="profile-display-username">—</p>
+              <span class="profile-role-badge" id="profile-role-badge">Player</span>
+
+              <!-- Bio display -->
+              <p class="profile-bio-display" id="profile-bio-display">No bio yet.</p>
+
+              <div class="profile-id-divider"></div>
+              <div class="profile-id-stat-row">
+                <div class="profile-id-stat">
+                  <div class="profile-id-stat-val" id="stat-games-count-p">0</div>
+                  <div class="profile-id-stat-label">Games</div>
+                </div>
+                <div class="profile-id-stat">
+                  <div class="profile-id-stat-val" id="stat-friends-count-p">0</div>
+                  <div class="profile-id-stat-label">Friends</div>
+                </div>
+              </div>
+
+              <!-- Status row -->
+              <div class="profile-status-row">
+                <span class="profile-status-dot" id="profile-status-dot" data-status="online"></span>
+                <select class="profile-status-select" id="profile-status-select" aria-label="Status">
+                  <option value="online">Online</option>
+                  <option value="away">Away</option>
+                  <option value="invisible">Invisible</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="profile-right">
+
+              <!-- Account Info -->
+              <div class="dash-card">
+                <div class="section-head" style="margin-bottom:14px">
+                  <div class="section-head-row">
+                    <span class="section-head-prefix">//</span>
+                    <span class="section-head-title" style="font-size:13px">Account Info</span>
+                  </div>
+                </div>
+                <div class="profile-info-block">
+                  <div class="profile-info-row">
+                    <span class="profile-info-key">Username</span>
+                    <span class="profile-info-val" id="profile-display-username-r">—</span>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="profile-info-key">Email</span>
+                    <span class="profile-info-val" id="profile-display-email">—</span>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="profile-info-key">Joined</span>
+                    <span class="profile-info-val" id="profile-display-joined">—</span>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="profile-info-key">User ID</span>
+                    <span class="profile-uid-chip" id="profile-display-uid">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bio editor -->
+              <div class="dash-card" style="margin-top:12px">
+                <div class="section-head" style="margin-bottom:14px">
+                  <div class="section-head-row">
+                    <span class="section-head-prefix">//</span>
+                    <span class="section-head-title" style="font-size:13px">Bio</span>
+                  </div>
+                </div>
+                <textarea class="profile-bio-textarea" id="profile-bio-input"
+                          maxlength="160" rows="3"
+                          placeholder="Write something about yourself…"
+                          aria-label="Bio"></textarea>
+                <div class="profile-bio-footer">
+                  <span class="profile-bio-chars" id="profile-bio-chars">160</span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span class="profile-save-status" id="profile-bio-save-status"></span>
+                    <button class="dash-btn dash-btn--primary" id="profile-bio-save" style="padding:6px 16px;font-size:11px">Save Bio</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Avatar colour picker -->
+              <div class="dash-card" style="margin-top:12px">
+                <div class="section-head" style="margin-bottom:14px">
+                  <div class="section-head-row">
+                    <span class="section-head-prefix">//</span>
+                    <span class="section-head-title" style="font-size:13px">Avatar Colour</span>
+                  </div>
+                </div>
+                <div class="profile-color-picker" id="profile-color-picker" role="group" aria-label="Avatar colour">
+                  <button class="profile-color-swatch" data-color="cyan"   style="--swatch-col:#00d4ff" aria-label="Cyan"   title="Cyan"></button>
+                  <button class="profile-color-swatch" data-color="purple" style="--swatch-col:#7b2df8" aria-label="Purple" title="Purple"></button>
+                  <button class="profile-color-swatch" data-color="green"  style="--swatch-col:#00e87a" aria-label="Green"  title="Green"></button>
+                  <button class="profile-color-swatch" data-color="gold"   style="--swatch-col:#f5a623" aria-label="Gold"   title="Gold"></button>
+                  <button class="profile-color-swatch" data-color="red"    style="--swatch-col:#ff4444" aria-label="Red"    title="Red"></button>
+                  <button class="profile-color-swatch" data-color="white"  style="--swatch-col:#e8e8f0" aria-label="White" title="White"></button>
+                </div>
+              </div>
+
+            </div><!-- /profile-right -->
+
+          </div>
+
+        </section><!-- /section-profile -->
+
+        <!-- ══════ FRIENDS ══════ -->
+        <section class="dash-section" id="section-friends" aria-label="Friends">
+
+          <div class="section-head">
+            <div class="section-head-row">
+              <span class="section-head-prefix">//</span>
+              <span class="section-head-title">Friends</span>
+            </div>
+            <p class="section-head-sub">Connect with other players on the platform.</p>
+          </div>
+
+          <!-- Stats strip -->
+          <div class="fr-stats">
+            <div class="fr-stat">
+              <span class="fr-stat-val" id="fr-total-count">0</span>
+              <span class="fr-stat-lbl">Friends</span>
+            </div>
+            <div class="fr-stat fr-stat--green">
+              <span class="fr-stat-val" id="fr-online-count">0</span>
+              <span class="fr-stat-lbl">Online</span>
+            </div>
+            <div class="fr-stat fr-stat--purple">
+              <span class="fr-stat-val" id="fr-pending-count">0</span>
+              <span class="fr-stat-lbl">Pending</span>
+            </div>
+          </div>
+
+          <!-- Add friend -->
+          <div class="fr-add-bar">
+            <div class="fr-add-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="search" id="fr-search" class="fr-add-input"
+                     placeholder="Search by username…" autocomplete="off" />
+            </div>
+            <button class="dash-btn dash-btn--primary" id="fr-add-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M20 21v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1"/><path d="M19 8v6M16 11h6"/></svg>
+              Add Friend
+            </button>
+          </div>
+          <div id="fr-status" class="fr-status"></div>
+
+          <!-- Tabs -->
+          <div class="fr-tabs">
+            <button class="fr-tab active" data-tab="all">All <span class="fr-badge" id="badge-all">0</span></button>
+            <button class="fr-tab" data-tab="online">Online <span class="fr-badge" id="badge-online">0</span></button>
+            <button class="fr-tab" data-tab="pending">Pending <span class="fr-badge" id="badge-pending">0</span></button>
+          </div>
+
+          <!-- Friend list -->
+          <div id="fr-list" class="fr-list">
+            <div class="fr-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <circle cx="9" cy="8" r="3"/><path d="M2 20c0-3 3-5.5 7-5.5s7 2.5 7 5.5"/>
+                <circle cx="18" cy="8" r="2.5"/><path d="M18 13.5c2.5 0 4.5 1.8 4.5 4"/>
+              </svg>
+              <p class="fr-empty-title">No friends yet</p>
+              <p class="fr-empty-sub">Search for a username above to send a friend request.</p>
+            </div>
+          </div>
+
+        </section><!-- /section-friends -->
+
+        <!-- ══════ MESSAGES ══════ -->
+        <section class="dash-section" id="section-messages" aria-label="Messages">
+
+          <div class="section-head">
+            <div class="section-head-row">
+              <span class="section-head-prefix">//</span>
+              <span class="section-head-title">Messages</span>
+            </div>
+          </div>
+
+          <div class="messages-layout">
+
+            <!-- Conversation list pane -->
+            <div class="msg-conv-pane">
+              <div class="msg-conv-toolbar">
+                <div class="msg-search-wrap">
+                  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input type="search" class="msg-search" id="msg-search"
+                         placeholder="Search conversations…" autocomplete="off" aria-label="Search conversations" />
+                </div>
+                <button class="msg-new-btn" id="msg-new-btn"
+                        title="New message" aria-label="New message">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+              <!-- New message search row (shown when + is clicked) -->
+              <div class="msg-new-row" id="msg-new-row" hidden>
+                <input type="search" class="msg-search" id="msg-new-input"
+                       placeholder="Search username to message…" autocomplete="off" />
+                <button class="msg-new-cancel" id="msg-new-cancel" aria-label="Cancel">✕</button>
+              </div>
+              <ul class="msg-conv-list" id="msg-conv-list" role="list" aria-label="Conversations">
+                <li class="msg-conv-empty">No conversations yet.<br>Click + to start one.</li>
+              </ul>
+            </div>
+
+            <!-- Chat pane -->
+            <div class="msg-chat-pane">
+              <div class="msg-chat-header" id="msg-chat-header">
+                <button class="msg-back-btn" id="msg-back-btn" aria-label="Back to conversations" hidden>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="msg-chat-header-name">Select a conversation</span>
+              </div>
+              <div class="msg-chat-feed" id="msg-chat-feed" aria-live="polite" aria-label="Messages">
+                <div class="msg-chat-empty">
+                  <svg viewBox="0 0 24 24" width="32" height="32" opacity="0.25"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <p>Open a conversation to start chatting</p>
+                </div>
+              </div>
+              <div class="msg-input-bar" id="msg-input-bar">
+                <input type="text" class="msg-input" id="msg-input"
+                       placeholder="Type a message…" maxlength="2000"
+                       autocomplete="off" aria-label="Message input" disabled />
+                <button class="msg-send-btn" id="msg-send-btn" aria-label="Send" disabled>
+                  <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </section><!-- /section-messages -->
+
+        <!-- ══════ SETTINGS ══════ -->
+        <section class="dash-section" id="section-settings" aria-label="Settings">
+
+          <div class="section-head">
+            <div class="section-head-row">
+              <span class="section-head-prefix">//</span>
+              <span class="section-head-title">Settings</span>
+            </div>
+          </div>
+
+          <div class="settings-layout">
+
+            <!-- Appearance -->
+            <div class="settings-group">
+              <div class="settings-group-header">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+                <span class="settings-group-title">Appearance</span>
+              </div>
+              <div class="settings-group-body">
+                <div class="settings-field-row settings-field-row--wrap">
+                  <div class="settings-field-info">
+                    <p class="settings-field-name">Accent Colour</p>
+                    <p class="settings-field-desc">Choose your dashboard accent colour.</p>
+                  </div>
+                  <div class="appearance-accent-row" id="appearance-accent-row" role="group" aria-label="Accent colour">
+                    <button class="appearance-swatch" data-accent="cyan"   style="--swatch-col:#00d4ff" aria-label="Cyan"   title="Cyan"></button>
+                    <button class="appearance-swatch" data-accent="purple" style="--swatch-col:#7b2df8" aria-label="Purple" title="Purple"></button>
+                    <button class="appearance-swatch" data-accent="green"  style="--swatch-col:#00e87a" aria-label="Green"  title="Green"></button>
+                    <button class="appearance-swatch" data-accent="gold"   style="--swatch-col:#f5a623" aria-label="Gold"   title="Gold"></button>
+                  </div>
+                </div>
+                <div class="settings-field-row settings-field-row--wrap" style="margin-top:14px">
+                  <div class="settings-field-info">
+                    <p class="settings-field-name">Sidebar Style</p>
+                    <p class="settings-field-desc">Control how the sidebar looks by default.</p>
+                  </div>
+                  <div class="sidebar-style-btns" id="sidebar-style-btns">
+                    <button class="sidebar-style-btn active" data-sidebar="expanded">Expanded</button>
+                    <button class="sidebar-style-btn" data-sidebar="collapsed">Collapsed</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Account info (read-only) -->
+            <div class="settings-group">
+              <div class="settings-group-header">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                <span class="settings-group-title">Account</span>
+              </div>
+              <div class="settings-group-body">
+                <div class="settings-info-row">
+                  <span class="settings-info-key">Username</span>
+                  <span class="settings-info-val" id="settings-info-username">—</span>
+                </div>
+                <div class="settings-info-row">
+                  <span class="settings-info-key">Email</span>
+                  <span class="settings-info-val" id="settings-info-email">—</span>
+                </div>
+                <div class="settings-info-row">
+                  <span class="settings-info-key">Member since</span>
+                  <span class="settings-info-val" id="settings-info-joined">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="settings-group">
+              <div class="settings-group-header">
+                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="settings-group-title">Notifications</span>
+              </div>
+              <div class="settings-group-body">
+                <div class="settings-field-row">
+                  <div class="settings-field-info">
+                    <p class="settings-field-name">Friend requests</p>
+                    <p class="settings-field-desc">Get notified when someone adds you.</p>
+                  </div>
+                  <label class="dash-toggle" aria-label="Friend request notifications">
+                    <input type="checkbox" id="notif-friends" checked />
+                    <span class="dash-toggle-track"></span>
+                  </label>
+                </div>
+                <div class="settings-field-row" style="margin-top:10px">
+                  <div class="settings-field-info">
+                    <p class="settings-field-name">Messages</p>
+                    <p class="settings-field-desc">Get notified for new direct messages.</p>
+                  </div>
+                  <label class="dash-toggle" aria-label="Message notifications">
+                    <input type="checkbox" id="notif-messages" checked />
+                    <span class="dash-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Change password -->
+            <div class="settings-group">
+              <div class="settings-group-header">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span class="settings-group-title">Security</span>
+              </div>
+              <div class="settings-group-body">
+                <form id="settings-pw-form" novalidate autocomplete="off">
+                  <!-- Hidden username field satisfies browser accessibility heuristic for password forms -->
+                  <input type="text" id="settings-pw-username" autocomplete="username" aria-hidden="true" tabindex="-1" hidden />
+                  <div class="settings-field">
+                    <label class="dash-field-label" for="settings-pw-current">// Current Password</label>
+                    <input type="password" id="settings-pw-current" class="dash-input" placeholder="••••••••" maxlength="128" autocomplete="current-password" />
+                  </div>
+                  <div class="settings-pw-row">
+                    <div class="settings-field">
+                      <label class="dash-field-label" for="settings-pw-new">// New Password</label>
+                      <input type="password" id="settings-pw-new" class="dash-input" placeholder="min. 8 characters" maxlength="128" autocomplete="new-password" />
+                    </div>
+                    <div class="settings-field">
+                      <label class="dash-field-label" for="settings-pw-confirm">// Confirm New</label>
+                      <input type="password" id="settings-pw-confirm" class="dash-input" placeholder="••••••••" maxlength="128" autocomplete="new-password" />
+                    </div>
+                  </div>
+                  <div class="settings-msg" id="settings-pw-msg" role="alert" aria-live="polite"></div>
+                  <button type="submit" class="dash-btn dash-btn--primary">Update Password</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Developer Console — hidden; revealed only for authorised account -->
+            <div class="settings-group" id="settings-group-devconsole" hidden>
+              <div class="settings-group-header">
+                <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span class="settings-group-title">Developer Console</span>
+                <span class="admin-role-badge" id="admin-role-badge" data-role="user">—</span>
+              </div>
+              <div class="settings-group-body">
+                <div class="settings-info-row">
+                  <span class="settings-info-key">Your Role</span>
+                  <span class="settings-info-val" id="admin-my-role">—</span>
+                </div>
+                <div style="margin-top:14px">
+                  <p class="settings-field-desc" style="margin-bottom:10px">Grant a role to any account by username. To bootstrap, you can grant yourself <strong>OWNER</strong>.</p>
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <input type="text" id="admin-grant-user" class="dash-input"
+                           placeholder="username" style="flex:1;min-width:100px" autocomplete="off" />
+                    <select id="admin-grant-role" class="dash-input" style="width:108px">
+                      <option value="OWNER">OWNER</option>
+                      <option value="ADMIN">ADMIN</option>
+                      <option value="MOD">MOD</option>
+                      <option value="USER" selected>USER</option>
+                    </select>
+                    <button class="dash-btn dash-btn--primary" id="admin-grant-btn">Grant</button>
+                  </div>
+                  <div class="settings-msg" id="admin-msg" role="alert" aria-live="polite" style="margin-top:8px"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Danger zone -->
+            <div class="settings-group settings-group--danger">
+              <div class="settings-group-header">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span class="settings-group-title">Danger Zone</span>
+              </div>
+              <div class="settings-group-body">
+                <div class="settings-field-row">
+                  <div class="settings-field-info">
+                    <p class="settings-field-name">Delete Account</p>
+                    <p class="settings-field-desc">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                  </div>
+                  <button class="dash-btn dash-btn--danger" id="btn-delete-account">Delete</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </section><!-- /section-settings -->
+
+      </main><!-- /dash-content -->
+    </div><!-- /dash-main -->
+
+  </div><!-- /dashboard-screen -->
+
+  <!-- ══ Avatar Crop Modal ══════════════════════════════════════════ -->
+  <div id="avatar-crop-modal" hidden
+       style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.72);
+              display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+    <p style="font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:rgba(0,212,255,.8);text-transform:uppercase;margin:0">
+      Drag &amp; scroll to crop
+    </p>
+    <canvas id="avatar-crop-canvas" width="280" height="280"
+            style="cursor:grab;border-radius:50%;border:1.5px solid rgba(0,212,255,.2);display:block"></canvas>
+    <input id="crop-zoom-slider" type="range" min="0" max="100" value="50"
+           style="width:220px;accent-color:#00d4ff" />
+    <div style="display:flex;gap:10px">
+      <button onclick="window._gh_cropRemove()"
+              style="font-family:var(--font-mono);font-size:11px;padding:8px 18px;background:none;
+                     border:1px solid rgba(255,77,106,.4);border-radius:6px;color:#ff4d6a;cursor:pointer">
+        Remove Photo
+      </button>
+      <button onclick="window._gh_cropCancel()"
+              style="font-family:var(--font-mono);font-size:11px;padding:8px 18px;background:none;
+                     border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#aaa;cursor:pointer">
+        Cancel
+      </button>
+      <button onclick="window._gh_cropSave()"
+              style="font-family:var(--font-mono);font-size:11px;padding:8px 18px;
+                     background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.35);
+                     border-radius:6px;color:#00d4ff;cursor:pointer">
+        Save
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ Inactivity Overlay (injected by dashboard.js) ══════════════ -->
+
+  <!-- loading.js is a plain script (no Firebase, no imports needed) -->
+  <script src="js/loading.js"></script>
+  <!-- Sentinel security (obfuscated) — must load before login module -->
+  <script src="js/sentinel.js"></script>
+  <!-- Responsive layout engine —  runs before modules so classes are set before first paint -->
+  <script src="js/responsive.js"></script>
+  <!-- login + register use ES modules to import Firebase from CDN -->
+  <script type="module" src="js/login.js"></script>
+  <script type="module" src="js/register.js"></script>
+  <!-- Dashboard modules -->
+  <script type="module" src="js/dashboard.js"></script>
+  <script type="module" src="js/overview/overview.js"></script>
+  <script type="module" src="js/games/games.js"></script>
+  <script type="module" src="js/profile/profile.js"></script>
+  <script type="module" src="js/messages/messages.js"></script>
+  <script type="module" src="js/friends/friends.js"></script>
+  <!-- New feature modules -->
+  <script type="module" src="js/notifications.js"></script>
+  <script type="module" src="js/context-menu.js"></script>
+  <script type="module" src="js/user-profile-modal.js"></script>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Context menu -->
+  <div id="ctx-menu" class="ctx-menu" hidden></div>
+
+  <!-- User profile modal -->
+  <div id="upm-modal" class="upm-overlay" hidden>
+    <div id="upm-backdrop" class="upm-backdrop" style="position:absolute;inset:0"></div>
+    <div class="upm-card">
+      <button id="upm-close" class="upm-close" aria-label="Close">&times;</button>
+      <div class="upm-banner"></div>
+      <div id="upm-loading" class="upm-loading">Loading profile…</div>
+      <div id="upm-body" hidden></div>
+    </div>
+  </div>
+
+  <!-- ══ In-app game viewer ══════════════════════════════════ -->
+  <div id="game-viewer" class="game-viewer" hidden aria-label="Game viewer">
+    <div class="game-viewer-bar">
+      <button class="game-viewer-back" id="game-viewer-back" onclick="closeGameViewer()" aria-label="Return to Game Library">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>Back to Library</span>
+      </button>
+      <div class="game-viewer-breadcrumb" aria-hidden="true">
+        <span>GAME_HUB</span>
+        <span class="game-viewer-breadcrumb-sep">/</span>
+        <span>Games</span>
+        <span class="game-viewer-breadcrumb-sep">/</span>
+      </div>
+      <span class="game-viewer-title" id="game-viewer-title">Game</span>
+      <span class="game-viewer-spacer"></span>
+      <div class="game-viewer-actions">
+        <button class="game-viewer-btn" id="game-viewer-fs" title="Fullscreen iframe" aria-label="Fullscreen">
+          <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button class="game-viewer-btn" onclick="closeGameViewer()" title="Close (Esc)" aria-label="Close game viewer">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <iframe id="game-viewer-frame" class="game-viewer-frame" src="" title="Game"
+            allow="fullscreen"
+            sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-same-origin"></iframe>
+  </div>
+</body>
+</html>

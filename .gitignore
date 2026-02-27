@@ -1,0 +1,9 @@
+# ─── Firebase credentials — NEVER commit the real config ─────────────────────
+# Copy js/firebase-config.example.js → js/firebase-config.js and fill in values.
+js/firebase-config.js
+
+# ─── OS / editor noise ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+*.log
