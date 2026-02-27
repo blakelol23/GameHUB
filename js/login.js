@@ -145,7 +145,8 @@ function heroFrame() {
   heroT += sphereSpeed * sphereDir;
   const W = heroCanvas.width, H = heroCanvas.height;
   heroCtx.clearRect(0, 0, W, H);
-  const cx = W * 0.52, cy = H * 0.44, R = Math.min(W, H) * 0.31;
+  const _mob = window.innerWidth <= 768;
+  const cx = W * (_mob ? 0.50 : 0.52), cy = H * (_mob ? 0.50 : 0.44), R = Math.min(W, H) * (_mob ? 0.38 : 0.31);
   const cosY = Math.cos(heroT * 1.4), sinY = Math.sin(heroT * 1.4);
   const cosX = Math.cos(SPHERE_CFG.tilt), sinX = Math.sin(SPHERE_CFG.tilt);
 
