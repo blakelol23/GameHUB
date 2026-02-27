@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUDOKU — AI Solver</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════
+   ROOT VARIABLES
+══════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #05060f;
+  --bg2:        #080a18;
+  --surface:    #0c0f20;
+  --surface2:   #111428;
+  --border-dim: #1a1f3a;
+
+  --cyan:       #00e5ff;
+  --cyan-dim:   #00b8d4;
+  --cyan-glow:  rgba(0, 229, 255, 0.18);
+  --cyan-glow2: rgba(0, 229, 255, 0.06);
+
+  --purple:     #b44fff;
+  --purple-dim: #8b33d4;
+  --purple-glow: rgba(180, 79, 255, 0.18);
+  --purple-glow2: rgba(180, 79, 255, 0.06);
+
+  --mid:        #5f8fff;   /* mid-gradient blue */
+  --mid-glow:   rgba(95, 143, 255, 0.15);
+
+  --given-col:  #e8f4ff;
+  --solved-col: #00e5ff;
+  --text:       #c8d8f0;
+  --muted:      #3a4a6a;
+  --muted2:     #2a3350;
+}
+
+/* ══════════════════════════════════════════════════════
+   BACKGROUND — animated mesh gradient + scanlines
+══════════════════════════════════════════════════════ */
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px 20px 90px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated aurora blobs */
+body::before, body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+body::before {
+  width: 600px; height: 600px;
+  top: -200px; left: -150px;
+  background: radial-gradient(circle, rgba(0,229,255,.12) 0%, transparent 70%);
+  animation: drift1 18s ease-in-out infinite alternate;
+}
+body::after {
+  width: 700px; height: 700px;
+  bottom: -200px; right: -200px;
+  background: radial-gradient(circle, rgba(180,79,255,.12) 0%, transparent 70%);
+  animation: drift2 22s ease-in-out infinite alternate;
+}
+
+@keyframes drift1 {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(120px,80px) scale(1.2); }
+}
+@keyframes drift2 {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(-100px,-60px) scale(1.15); }
+}
+
+/* Scanlines overlay */
+body::before {
+  background:
+    radial-gradient(circle, rgba(0,229,255,.12) 0%, transparent 70%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+}
+
+/* Everything above bg layers */
+header, .grid-outer, .controls, .status-area, .log-section, #ocr-debug {
+  position: relative; z-index: 1;
+}
+
+/* ══════════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════════ */
+header {
+  text-align: center;
+  margin-bottom: 50px;
+  animation: fadeDown .7s ease both;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.header-eyebrow {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .35em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 10px;
+  opacity: .7;
+}
+
+header h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2.6rem, 8vw, 5.2rem);
+  font-weight: 900;
+  letter-spacing: .06em;
+  line-height: 1;
+  background: linear-gradient(120deg, var(--cyan) 0%, var(--mid) 45%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 28px rgba(0,229,255,.25));
+}
+
+.header-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+/* Decorative line under title */
+.header-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.header-line::before, .header-line::after {
+  content: '';
+  display: block;
+  height: 1px;
+  width: 80px;
+  background: linear-gradient(90deg, transparent, var(--cyan-dim));
+}
+.header-line::after {
+  background: linear-gradient(90deg, var(--purple-dim), transparent);
+}
+.header-line span {
+  width: 6px; height: 6px;
+  background: var(--mid);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--mid);
+}
+
+/* ══════════════════════════════════════════════════════
+   GRID
+══════════════════════════════════════════════════════ */
+.grid-outer {
+  display: inline-block;
+  position: relative;
+  animation: fadeUp .7s .15s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Glowing border wrapper */
+.grid-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--cyan), var(--mid), var(--purple));
+  z-index: 0;
+  opacity: .6;
+  filter: blur(1px);
+}
+
+.grid-wrap {
+  position: relative;
+  z-index: 1;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(135deg, var(--cyan), var(--mid), var(--purple)) border-box;
+  border-radius: 4px;
+  display: inline-block;
+  box-shadow:
+    0 0 40px rgba(0,229,255,.08),
+    0 0 80px rgba(180,79,255,.06),
+    inset 0 0 40px rgba(0,0,0,.5);
+}
+
+table { border-collapse: collapse; display: block; border-radius: 3px; overflow: hidden; }
+
+td {
+  width: 52px; height: 52px;
+  border: 1px solid var(--border-dim);
+  padding: 0;
+  background: var(--surface);
+  position: relative;
+  transition: background .15s;
+}
+td:hover { background: var(--surface2); }
+
+/* Box-divider lines — cyan tint */
+td.br { border-right:  2px solid #1e2d4a; }
+td.bb { border-bottom: 2px solid #1e2d4a; }
+
+td input {
+  width: 100%; height: 100%;
+  background: transparent;
+  border: none; outline: none;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--given-col);
+  cursor: pointer;
+  caret-color: var(--cyan);
+  transition: background .12s, text-shadow .12s;
+}
+
+td input:focus {
+  background: rgba(0,229,255,.06);
+  box-shadow: inset 0 0 0 1.5px rgba(0,229,255,.3);
+}
+
+td input.given {
+  color: var(--given-col);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(232,244,255,.3);
+}
+
+td input.solved {
+  color: var(--cyan);
+  font-weight: 600;
+  text-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0,229,255,.4);
+  animation: digitReveal .22s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+td input.guess {
+  color: var(--purple);
+  text-shadow: 0 0 10px var(--purple);
+  background: rgba(180,79,255,.07);
+}
+
+@keyframes digitReveal {
+  from { transform: scale(.4) rotateY(90deg); opacity: 0; }
+  to   { transform: scale(1)  rotateY(0deg);  opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════
+   CONTROLS
+══════════════════════════════════════════════════════ */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  justify-content: center;
+  animation: fadeUp .7s .25s ease both;
+}
+
+/* Base button */
+.btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 11px 26px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer sweep on hover */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.12) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform .4s;
+}
+.btn:hover::after { transform: translateX(100%); }
+
+/* Primary — cyan */
+.btn-primary {
+  background: linear-gradient(135deg, rgba(0,229,255,.15), rgba(95,143,255,.1));
+  border: 1.5px solid var(--cyan-dim);
+  color: var(--cyan);
+  box-shadow: 0 0 16px rgba(0,229,255,.12), inset 0 0 16px rgba(0,229,255,.04);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(0,229,255,.25), rgba(95,143,255,.18));
+  box-shadow: 0 0 28px rgba(0,229,255,.25), inset 0 0 20px rgba(0,229,255,.08);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+
+/* Ghost — purple */
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--muted);
+  color: var(--muted);
+}
+.btn-ghost:hover {
+  border-color: var(--purple-dim);
+  color: var(--purple);
+  box-shadow: 0 0 16px rgba(180,79,255,.15);
+  transform: translateY(-1px);
+}
+
+/* File upload */
+.btn-file {
+  font-family: 'Orbitron', sans-serif;
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 11px 26px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1.5px dashed var(--muted);
+  background: transparent;
+  color: var(--muted);
+  transition: all .15s;
+}
+.btn-file:hover {
+  border-color: var(--mid);
+  color: var(--mid);
+  box-shadow: 0 0 16px var(--mid-glow);
+  transform: translateY(-1px);
+}
+input[type="file"] { display: none; }
+
+/* ══════════════════════════════════════════════════════
+   STATUS + PROGRESS
+══════════════════════════════════════════════════════ */
+.status-area {
+  width: min(468px, 94vw);
+  margin-top: 22px;
+  animation: fadeUp .7s .3s ease both;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background .3s, box-shadow .3s;
+}
+.status-dot.ok     { background: #0f9; box-shadow: 0 0 8px #0f9; }
+.status-dot.err    { background: #f44; box-shadow: 0 0 8px #f44; }
+.status-dot.busy   { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: pulse .9s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .5; transform: scale(1.4); }
+}
+
+#status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .72rem;
+  letter-spacing: .1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#status.ok   { color: #0f9; }
+#status.err  { color: #f76; }
+#status.busy { color: var(--cyan); }
+
+.prog-track {
+  width: 100%;
+  height: 3px;
+  background: var(--border-dim);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+#prog-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--mid), var(--purple));
+  border-radius: 2px;
+  transition: width .25s;
+  box-shadow: 0 0 8px var(--cyan-dim);
+}
+
+/* ══════════════════════════════════════════════════════
+   SOLVER LOG
+══════════════════════════════════════════════════════ */
+.log-section {
+  width: min(468px, 94vw);
+  margin-top: 24px;
+  animation: fadeUp .7s .35s ease both;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.log-header-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.log-header::before {
+  content: '//';
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .62rem;
+  color: var(--cyan);
+  opacity: .5;
+}
+.log-header-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-dim), transparent);
+}
+
+#log {
+  width: 100%;
+  height: 150px;
+  background: rgba(0,0,0,.6);
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  color: #3a7a5a;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .7rem;
+  padding: 10px 12px;
+  resize: vertical;
+  outline: none;
+  overflow-y: scroll;
+  line-height: 1.65;
+  letter-spacing: .02em;
+  box-shadow: inset 0 0 20px rgba(0,0,0,.4);
+}
+
+/* ══════════════════════════════════════════════════════
+   OCR DEBUG
+══════════════════════════════════════════════════════ */
+#ocr-debug {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+#ocr-debug.on { display: flex; }
+
+.ocr-debug-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  align-self: flex-start;
+}
+#ocr-cells {
+  display: grid;
+  grid-template-columns: repeat(9, 48px);
+  gap: 2px;
+  background: #000;
+  padding: 6px;
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════════════════════
+   SOLVED BANNER
+══════════════════════════════════════════════════════ */
+#solved-banner {
+  pointer-events: none;
+  position: fixed; inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity .3s;
+  background: rgba(5,6,15,.5);
+  backdrop-filter: blur(3px);
+}
+#solved-banner.on { opacity: 1; }
+#solved-banner .banner-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+#solved-banner span {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(3.5rem, 14vw, 8rem);
+  letter-spacing: .08em;
+  background: linear-gradient(120deg, var(--cyan), var(--mid), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 40px rgba(0,229,255,.5));
+  animation: solvedPop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+#solved-banner .banner-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: .75rem;
+  letter-spacing: .3em;
+  color: var(--mid);
+  text-transform: uppercase;
+  animation: solvedPop .5s .1s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes solvedPop {
+  from { transform: scale(.5); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════
+   PARTICLES canvas (decorative)
+══════════════════════════════════════════════════════ */
+#particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .4;
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div id="solved-banner">
+  <div class="banner-inner">
+    <span>SOLVED</span>
+    <div class="banner-sub">puzzle complete</div>
+  </div>
+</div>
+
+<header>
+  <div class="header-eyebrow">AI-Powered</div>
+  <h1>SUDOKU</h1>
+  <div class="header-line"><span></span></div>
+  <div class="header-sub">OCR · Constraint Propagation · Backtracking</div>
+</header>
+
+<div class="grid-outer">
+  <div class="grid-glow"></div>
+  <div class="grid-wrap">
+    <table id="grid"></table>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="btn btn-primary" onclick="startSolving()">&#9654; Solve</button>
+  <button class="btn btn-ghost"   onclick="resetBoard()">&#10005; Clear</button>
+  <label  class="btn-file"        for="img-input">&#128247; Load Image</label>
+  <input  type="file" id="img-input" accept="image/*" onchange="handleImage(event)">
+</div>
+
+<div class="status-area">
+  <div class="status-row">
+    <div class="status-dot" id="status-dot"></div>
+    <div id="status">ready</div>
+  </div>
+  <div class="prog-track"><div id="prog-bar"></div></div>
+</div>
+
+<div class="log-section">
+  <div class="log-header">
+    <span class="log-header-label">solver log</span>
+    <div class="log-header-line"></div>
+  </div>
+  <textarea id="log" readonly spellcheck="false"></textarea>
+</div>
+
+<div id="ocr-debug">
+  <div class="ocr-debug-label">// ocr cell preview</div>
+  <div id="ocr-cells"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  PARTICLE SYSTEM  — floating dots in brand colors
+// ═══════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('particles');
+  const ctx    = canvas.getContext('2d');
+  let W, H;
+  const COLORS = ['rgba(0,229,255,', 'rgba(95,143,255,', 'rgba(180,79,255,'];
+  const particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for (let i = 0; i < 55; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.4 + 0.3,
+      vx: (Math.random() - .5) * 0.25,
+      vy: (Math.random() - .5) * 0.25,
+      col: COLORS[Math.floor(Math.random() * COLORS.length)],
+      a: Math.random() * .5 + .15,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.col + p.a + ')';
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════
+const N = 9;
+let logLines = [];
+
+const $    = id => document.getElementById(id);
+const cell = (r, c) => document.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function setStatus(msg, type = '') {
+  $('status').textContent = msg;
+  $('status').className   = type;
+  $('status-dot').className = 'status-dot ' + type;
+}
+function setProgress(p) {
+  $('prog-bar').style.width = Math.min(100, Math.max(0, p)) + '%';
+}
+function log(msg) {
+  logLines.push(msg);
+  if (logLines.length > 800) logLines.shift();
+  const el = $('log');
+  el.value = logLines.join('\n');
+  el.scrollTop = el.scrollHeight;
+}
+function clearLog() { logLines = []; $('log').value = ''; }
+
+// ═══════════════════════════════════════════════════════════════
+//  GRID  — build DOM table once on load
+// ═══════════════════════════════════════════════════════════════
+function buildGrid() {
+  const table = $('grid');
+  table.innerHTML = '';
+  for (let r = 0; r < N; r++) {
+    const tr = table.insertRow();
+    for (let c = 0; c < N; c++) {
+      const td = tr.insertCell();
+      if (c === 2 || c === 5) td.classList.add('br');
+      if (r === 2 || r === 5) td.classList.add('bb');
+
+      const el = document.createElement('input');
+      el.type = 'text'; el.maxLength = 1;
+      el.dataset.r = r; el.dataset.c = c;
+      el.autocomplete = 'off';
+
+      el.addEventListener('input', e => {
+        e.target.value = e.target.value.replace(/[^1-9]/g, '').slice(-1);
+        e.target.className = e.target.value ? 'given' : '';
+      });
+
+      el.addEventListener('keydown', e => {
+        const map = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] };
+        if (map[e.key]) {
+          e.preventDefault();
+          const [dr, dc] = map[e.key];
+          cell(Math.max(0,Math.min(8,r+dr)), Math.max(0,Math.min(8,c+dc)))?.focus();
+        }
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          e.target.value = ''; e.target.className = '';
+        }
+      });
+
+      td.appendChild(el);
+    }
+  }
+}
+
+function resetBoard() {
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++) {
+      const el = cell(r, c);
+      el.value = ''; el.className = '';
+    }
+  $('ocr-debug').classList.remove('on');
+  clearLog();
+  setStatus('ready');
+  setProgress(0);
+}
+
+function readGrid() {
+  const g = new Int8Array(N * N);
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      g[r * N + c] = parseInt(cell(r, c).value) || 0;
+  return g;
+}
+
+function writeGrid(g, given) {
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const i = r * N + c, el = cell(r, c), v = g[i];
+      el.value = v || '';
+      el.className = !v ? '' : given[i] ? 'given' : 'solved';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SOLVER ENGINE
+// ═══════════════════════════════════════════════════════════════
+function getCandidates(g, idx) {
+  const r = (idx / N) | 0, c = idx % N;
+  const used = new Uint8Array(10);
+  for (let i = 0; i < N; i++) { used[g[r*N+i]] = 1; used[g[i*N+c]] = 1; }
+  const br = (r/3|0)*3, bc = (c/3|0)*3;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) used[g[(br+i)*N+(bc+j)]] = 1;
+  const out = []; for (let n = 1; n <= 9; n++) if (!used[n]) out.push(n);
+  return out;
+}
+
+function propagate(g) {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = 0; i < N * N; i++) {
+      if (g[i] !== 0) continue;
+      const cands = getCandidates(g, i);
+      if (cands.length === 0) return false;
+      if (cands.length === 1) { g[i] = cands[0]; changed = true; }
+    }
+  }
+  return true;
+}
+
+function pickMRV(g) {
+  let best = -1, bestLen = 10;
+  for (let i = 0; i < N * N; i++) {
+    if (g[i] !== 0) continue;
+    const len = getCandidates(g, i).length;
+    if (len === 0) return -2;
+    if (len < bestLen) { bestLen = len; best = i; }
+  }
+  return best;
+}
+
+function validateGivens(g) {
+  for (let r = 0; r < N; r++) {
+    const rs = new Set(), cs = new Set();
+    for (let c = 0; c < N; c++) {
+      const rv = g[r*N+c], cv = g[c*N+r];
+      if (rv) { if (rs.has(rv)) return false; rs.add(rv); }
+      if (cv) { if (cs.has(cv)) return false; cs.add(cv); }
+    }
+  }
+  for (let br = 0; br < 3; br++) for (let bc = 0; bc < 3; bc++) {
+    const s = new Set();
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+      const v = g[(br*3+i)*N+(bc*3+j)];
+      if (v) { if (s.has(v)) return false; s.add(v); }
+    }
+  }
+  return true;
+}
+
+let _steps = 0, _givenMask;
+
+async function btSolve(g) {
+  if (!propagate(g)) return false;
+  const idx = pickMRV(g);
+  if (idx === -2) return false;
+  if (idx === -1) return true;
+
+  for (const val of getCandidates(g, idx)) {
+    const branch = g.slice();
+    branch[idx] = val;
+    _steps++;
+    if (_steps % 10 === 0) {
+      writeGrid(branch, _givenMask);
+      setProgress(5 + Math.min(90, _steps * 0.3));
+      await sleep(0);
+    }
+    if (await btSolve(branch)) { g.set(branch); return true; }
+  }
+  return false;
+}
+
+async function startSolving() {
+  clearLog();
+  setProgress(0);
+  _steps = 0;
+
+  const g = readGrid();
+  const givenCount = g.filter(v => v !== 0).length;
+  log(`── solve started — ${givenCount} givens ──`);
+
+  // Need at least 17 clues for a solvable sudoku.
+  // Fewer means the board is blank or OCR didn't fill anything in.
+  if (givenCount < 17) {
+    log(`✗ only ${givenCount} clue${givenCount !== 1 ? 's' : ''} detected — minimum is 17`);
+    log('   Enter clues manually, or use "Load Image" to scan a puzzle.');
+    setStatus(`not enough clues (${givenCount} found, need 17+)`, 'err');
+    return;
+  }
+
+  if (!validateGivens(g)) {
+    log('✗ conflicting clues — duplicate in row, column, or box');
+    setStatus('invalid board — conflicting clues', 'err');
+    setProgress(0);
+    return;
+  }
+
+  setStatus('solving…', 'busy');
+  setProgress(5);
+
+  _givenMask = new Uint8Array(N * N);
+  for (let i = 0; i < N * N; i++) _givenMask[i] = g[i] ? 1 : 0;
+
+  const ok = await btSolve(g);
+
+  if (ok) {
+    writeGrid(g, _givenMask);
+    log('✓ solved!');
+    setStatus('solved!', 'ok');
+    setProgress(100);
+    const banner = $('solved-banner');
+    banner.classList.add('on');
+    setTimeout(() => banner.classList.remove('on'), 2000);
+  } else {
+    log('✗ no solution exists');
+    setStatus('no solution found', 'err');
+    setProgress(0);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  OCR ENGINE
+// ═══════════════════════════════════════════════════════════════
+async function handleImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  resetBoard(); clearLog();
+  log('── ocr started ──');
+  setStatus('loading image…', 'busy');
+  setProgress(2);
+
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  await new Promise(res => { img.onload = res; });
+  URL.revokeObjectURL(img.src);
+
+  const W = img.naturalWidth, H = img.naturalHeight;
+  log(`image: ${W}×${H}`);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+
+  const bounds = detectGridBounds(ctx, W, H);
+  log(`grid: (${bounds.x1},${bounds.y1}) → (${bounds.x2},${bounds.y2})  [${bounds.x2-bounds.x1}×${bounds.y2-bounds.y1}px]`);
+
+  const gridW = bounds.x2 - bounds.x1;
+  const gridH = bounds.y2 - bounds.y1;
+  const cellW = gridW / N;
+  const cellH = gridH / N;
+
+  setStatus('loading OCR engine…', 'busy');
+  const worker = await Tesseract.createWorker('eng', 1);
+  await worker.setParameters({ tessedit_char_whitelist: '123456789' });
+
+  const cellsDiv = $('ocr-cells');
+  cellsDiv.innerHTML = '';
+  $('ocr-debug').classList.add('on');
+
+  const PAD_X = cellW * 0.13, PAD_Y = cellH * 0.13;
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      setProgress(5 + Math.round(88 * (r*N+c) / 81));
+
+      const sx = Math.round(bounds.x1 + c * cellW + PAD_X);
+      const sy = Math.round(bounds.y1 + r * cellH + PAD_Y);
+      const sw = Math.max(4, Math.round(cellW - 2*PAD_X));
+      const sh = Math.max(4, Math.round(cellH - 2*PAD_Y));
+
+      const { ocrCanvas, thumb, isEmpty, stddev } = prepareCell(ctx, sx, sy, sw, sh);
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:relative;width:48px;height:48px;background:#000;';
+      thumb.style.cssText   = 'width:48px;height:48px;image-rendering:pixelated;display:block;';
+      wrapper.appendChild(thumb);
+      cellsDiv.appendChild(wrapper);
+
+      if (isEmpty) { log(`R${r+1}C${c+1}: empty (stddev=${stddev})`); continue; }
+
+      let digit = 0;
+      try {
+        const { data } = await worker.recognize(ocrCanvas, {}, { tessedit_pageseg_mode: '8' });
+        // Tesseract often reads "1" as l, I, i, or | — remap them first
+        const rawTxt = (data.text || '').replace(/[lIi|\\[\\]!]/g, '1');
+        const txt  = rawTxt.replace(/[^1-9]/g, '');
+        const conf = data.confidence || 0;
+        log(`R${r+1}C${c+1}: "${txt}"  conf=${Math.round(conf)}%  stddev=${stddev}`);
+        if (txt && conf >= 5) digit = parseInt(txt[0]);
+      } catch(e) { log(`R${r+1}C${c+1}: err — ${e.message}`); }
+
+      if (digit) {
+        const el = cell(r, c);
+        el.value = digit; el.className = 'given';
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:absolute;bottom:1px;right:2px;font:bold 9px monospace;color:#0ef;line-height:1;';
+        lbl.textContent = digit;
+        wrapper.appendChild(lbl);
+      }
+    }
+  }
+
+  await worker.terminate();
+  setProgress(96);
+
+  // Count how many digits were actually read so the user knows what OCR found
+  const ocrCount = readGrid().filter(v => v !== 0).length;
+  log(`── ocr complete — ${ocrCount} digit${ocrCount !== 1 ? 's' : ''} detected ──`);
+
+  if (ocrCount < 17) {
+    log(`⚠ only ${ocrCount} digits found — image may not be cropped correctly`);
+    log('  Check the cell preview below. You can also fill in missed clues manually.');
+    setStatus(`ocr found ${ocrCount} digits — check preview`, 'err');
+    setProgress(0);
+    return;  // Don't auto-solve — let user fix the board first
+  }
+
+  setStatus('ocr done — solving…', 'busy');
+  await sleep(80);
+  await startSolving();
+}
+
+function detectGridBounds(ctx, W, H) {
+  const scale = Math.min(1, 700 / Math.max(W, H));
+  const dw = Math.round(W*scale), dh = Math.round(H*scale);
+  const ds = document.createElement('canvas'); ds.width=dw; ds.height=dh;
+  const dc = ds.getContext('2d',{willReadFrequently:true});
+  dc.drawImage(ctx.canvas, 0, 0, dw, dh);
+  const pd = dc.getImageData(0,0,dw,dh).data;
+  const gray = new Float32Array(dw*dh);
+  for (let i=0;i<gray.length;i++) gray[i]=.299*pd[i*4]+.587*pd[i*4+1]+.114*pd[i*4+2];
+  const mag = new Float32Array(dw*dh);
+  for (let y=1;y<dh-1;y++) for (let x=1;x<dw-1;x++) {
+    const g=(dy,dx)=>gray[(y+dy)*dw+(x+dx)];
+    const gx=-g(-1,-1)+g(-1,1)-2*g(0,-1)+2*g(0,1)-g(1,-1)+g(1,1);
+    const gy=-g(-1,-1)-2*g(-1,0)+g(-1,1)+g(1,-1)+2*g(1,0)-g(1,1);
+    mag[y*dw+x]=Math.sqrt(gx*gx+gy*gy);
+  }
+  const rP=new Float32Array(dh), cP=new Float32Array(dw);
+  for (let y=0;y<dh;y++){let s=0;for(let x=0;x<dw;x++)s+=mag[y*dw+x];rP[y]=s/dw;}
+  for (let x=0;x<dw;x++){let s=0;for(let y=0;y<dh;y++)s+=mag[y*dw+x];cP[x]=s/dh;}
+  const rM=Math.max(...rP), cM=Math.max(...cP);
+  const rT=rM*.14, cT=cM*.14;
+  let ry1=1,ry2=dh-2,cx1=1,cx2=dw-2;
+  for(let y=1;y<dh*.5;y++){if(rP[y]>rT){ry1=y;break;}}
+  for(let y=dh-2;y>dh*.5;y--){if(rP[y]>rT){ry2=y;break;}}
+  for(let x=1;x<dw*.5;x++){if(cP[x]>cT){cx1=x;break;}}
+  for(let x=dw-2;x>dw*.5;x--){if(cP[x]>cT){cx2=x;break;}}
+  const peakR=s=>{const sl=Math.round(dh*.05);let b=s,bv=0;for(let y=Math.max(0,s-sl);y<=Math.min(dh-1,s+sl);y++)if(rP[y]>bv){bv=rP[y];b=y;}return b;};
+  const peakC=s=>{const sl=Math.round(dw*.05);let b=s,bv=0;for(let x=Math.max(0,s-sl);x<=Math.min(dw-1,s+sl);x++)if(cP[x]>bv){bv=cP[x];b=x;}return b;};
+  ry1=peakR(ry1);ry2=peakR(ry2);cx1=peakC(cx1);cx2=peakC(cx2);
+  let x1=Math.round(cx1/scale),y1=Math.round(ry1/scale),x2=Math.round(cx2/scale),y2=Math.round(ry2/scale);
+  if((x2-x1)<Math.min(W,H)*.3||(y2-y1)<Math.min(W,H)*.3){const mx=Math.round(W*.05),my=Math.round(H*.05);x1=mx;y1=my;x2=W-mx;y2=H-my;}
+  const nx=Math.round((x2-x1)*.015),ny=Math.round((y2-y1)*.015);
+  return {x1:x1+nx,y1:y1+ny,x2:x2-nx,y2:y2-ny};
+}
+
+function prepareCell(ctx, sx, sy, sw, sh) {
+  const SZ = 280, PAD = 30, CW = SZ + PAD * 2;
+
+  // Detect emptiness using contrast (stddev) on the RAW source pixels.
+  // This is independent of binarization — empty cells are uniform,
+  // cells with digits have high brightness variance.
+  const rawId = ctx.getImageData(sx, sy, Math.max(1,sw), Math.max(1,sh));
+  const rawD  = rawId.data;
+  const cx0 = Math.round(sw * 0.20), cx1 = Math.round(sw * 0.80);
+  const cy0 = Math.round(sh * 0.20), cy1 = Math.round(sh * 0.80);
+  let sum = 0, sum2 = 0, cnt = 0;
+  for (let y = cy0; y < cy1; y++) {
+    for (let x = cx0; x < cx1; x++) {
+      const i = (y * sw + x) * 4;
+      const lum = 0.299*rawD[i] + 0.587*rawD[i+1] + 0.114*rawD[i+2];
+      sum += lum; sum2 += lum*lum; cnt++;
+    }
+  }
+  const mean   = cnt > 0 ? sum / cnt : 128;
+  const stddev = cnt > 0 ? Math.sqrt(Math.max(0, sum2/cnt - mean*mean)) : 0;
+  const isEmpty = stddev < 4;
+
+  // Build OCR canvas: upscale + binarize to black-on-white for Tesseract
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = CW;
+  const cc = cv.getContext('2d', {willReadFrequently: true});
+  cc.fillStyle = '#fff';
+  cc.fillRect(0, 0, CW, CW);
+  cc.drawImage(ctx.canvas, sx, sy, sw, sh, PAD, PAD, SZ, SZ);
+
+  const id = cc.getImageData(0, 0, CW, CW);
+  const d  = id.data;
+
+  // Compute threshold from inner area brightness distribution
+  const lums = [];
+  for (let y = PAD; y < PAD+SZ; y++)
+    for (let x = PAD; x < PAD+SZ; x++) {
+      const i = (y*CW+x)*4;
+      lums.push(0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]);
+    }
+  lums.sort((a,b) => a-b);
+  const bgLum = lums[Math.floor(lums.length * 0.85)];
+  const fgLum = lums[Math.floor(lums.length * 0.15)];
+  const thr   = (bgLum + fgLum) / 2;
+  const bgIsDark = bgLum < 128;
+
+  // Binarize: always produce black ink on white background
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+    const isInk = bgIsDark ? lum > thr : lum < thr;
+    d[i] = d[i+1] = d[i+2] = isInk ? 0 : 255;
+    d[i+3] = 255;
+  }
+  cc.putImageData(id, 0, 0);
+
+  const thumb = document.createElement('canvas');
+  thumb.width = thumb.height = 48;
+  thumb.getContext('2d').drawImage(cv, 0, 0, 48, 48);
+
+  return { ocrCanvas: cv, thumb, isEmpty, stddev: Math.round(stddev) };
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+buildGrid();
+</script>
+</body>
+</html>

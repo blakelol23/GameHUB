@@ -1,0 +1,285 @@
+/* ════════════════════════════════════════════════════════════
+   PROFILE SECTION
+   ════════════════════════════════════════════════════════════ */
+
+.profile-layout {
+  display              : grid;
+  grid-template-columns: 280px 1fr;
+  gap                  : 20px;
+  align-items          : start;
+}
+
+@media (max-width: 860px) {
+  .profile-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Identity card ─────────────────────────────────────────── */
+.profile-id-card {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 10px;
+  padding      : 30px 24px 24px;
+  display      : flex;
+  flex-direction: column;
+  align-items  : center;
+  gap          : 14px;
+  text-align   : center;
+  position     : relative;
+  overflow     : hidden;
+}
+
+.profile-id-card::before {
+  content   : '';
+  position  : absolute;
+  top       : 0;
+  left      : 0;
+  right     : 0;
+  height    : 2px;
+  background: linear-gradient(90deg, transparent, var(--dash-accent), transparent);
+  opacity   : 0.45;
+}
+
+/* Avatar circle with initials */
+.profile-avatar {
+  width           : 80px;
+  height          : 80px;
+  border-radius   : 50%;
+  background      : radial-gradient(circle at 35% 35%, rgba(0, 212, 255, 0.2), rgba(95, 50, 210, 0.3));
+  border          : 2px solid rgba(0, 212, 255, 0.3);
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  font-size       : 28px;
+  font-weight     : 700;
+  color           : var(--dash-accent);
+  text-shadow     : 0 0 16px rgba(0, 212, 255, 0.5);
+  box-shadow      : 0 0 24px rgba(0, 212, 255, 0.12), inset 0 0 20px rgba(0, 212, 255, 0.05);
+  letter-spacing  : 0.03em;
+  flex-shrink     : 0;
+}
+
+.profile-username {
+  font-size     : 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color         : #e4e8f4;
+}
+
+.profile-role-badge {
+  font-size     : 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding       : 3px 10px;
+  border-radius : 3px;
+  background    : rgba(0, 212, 255, 0.08);
+  border        : 1px solid rgba(0, 212, 255, 0.2);
+  color         : var(--dash-accent);
+}
+
+.profile-id-divider {
+  width     : 100%;
+  height    : 1px;
+  background: var(--dash-border);
+}
+
+.profile-id-stat-row {
+  display              : grid;
+  grid-template-columns: 1fr 1fr;
+  gap                  : 10px;
+  width                : 100%;
+}
+
+.profile-id-stat {
+  text-align: center;
+}
+
+.profile-id-stat-val {
+  font-size  : 20px;
+  color      : #e4e8f4;
+  line-height: 1;
+}
+
+.profile-id-stat-label {
+  font-size     : 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color         : var(--dash-text-faint);
+  margin-top    : 4px;
+}
+
+/* ── Right column ──────────────────────────────────────────── */
+.profile-right {
+  display       : flex;
+  flex-direction: column;
+  gap           : 16px;
+}
+
+/* ── Info block ────────────────────────────────────────────── */
+.profile-info-block {
+  display       : flex;
+  flex-direction: column;
+  gap           : 2px;
+}
+
+.profile-info-row {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  padding        : 13px 16px;
+  border-radius  : 6px;
+  border-bottom  : 1px solid var(--dash-border2);
+  gap            : 12px;
+}
+
+.profile-info-row:last-child {
+  border-bottom: none;
+}
+
+.profile-info-row:hover {
+  background: rgba(0, 212, 255, 0.025);
+}
+
+.profile-info-key {
+  font-size     : 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color         : var(--dash-text-faint);
+  flex-shrink   : 0;
+  min-width     : 110px;
+}
+
+.profile-info-val {
+  font-size: 12px;
+  color    : var(--dash-text);
+  word-break: break-all;
+  text-align: right;
+}
+
+/* ── UID monospace chip ────────────────────────────────────── */
+.profile-uid-chip {
+  font-size   : 10px;
+  color       : var(--dash-text-faint);
+  letter-spacing: 0.04em;
+  background  : var(--dash-surface3);
+  border      : 1px solid var(--dash-border2);
+  border-radius: 3px;
+  padding     : 2px 7px;
+  word-break  : break-all;
+  text-align  : right;
+}
+
+/* ── Bio block ─────────────────────────────────────────────────── */
+.profile-bio-display {
+  font-size  : 11px;
+  color      : var(--dash-text-dim);
+  line-height: 1.65;
+  text-align : center;
+  max-width  : 220px;
+  margin     : 0 auto;
+  font-style : italic;
+  opacity    : 0.7;
+}
+
+.profile-bio-edit-card { display: flex; flex-direction: column; gap: 10px; }
+
+.profile-bio-textarea {
+  width        : 100%;
+  background   : var(--dash-surface);
+  border       : 1px solid var(--dash-border);
+  border-radius: 5px;
+  color        : var(--dash-text);
+  font-family  : var(--font-mono);
+  font-size    : 12px;
+  padding      : 9px 12px;
+  outline      : none;
+  resize       : vertical;
+  min-height   : 80px;
+  max-height   : 160px;
+  transition   : border-color 0.18s;
+  box-sizing   : border-box;
+  line-height  : 1.55;
+}
+.profile-bio-textarea:focus { border-color: rgba(0,212,255,0.4); }
+
+.profile-bio-footer {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  gap            : 8px;
+}
+
+.profile-bio-chars {
+  font-size  : 10px;
+  color      : var(--dash-text-faint);
+  letter-spacing: 0.05em;
+}
+
+.profile-save-status {
+  font-size  : 10.5px;
+  letter-spacing: 0.05em;
+  transition : opacity 0.4s ease;
+  opacity    : 0;
+}
+.profile-save-status--ok  { color: var(--dash-green); }
+.profile-save-status--err { color: var(--dash-red);   }
+
+/* ── Avatar colour swatches ──────────────────────────────────── */
+.profile-color-picker {
+  display        : flex;
+  gap            : 7px;
+  justify-content: center;
+  flex-wrap      : wrap;
+}
+
+.profile-color-swatch {
+  width        : 22px;
+  height       : 22px;
+  border-radius: 50%;
+  background   : var(--swatch-col, #00d4ff);
+  border       : 2px solid transparent;
+  cursor       : pointer;
+  transition   : transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  outline      : none;
+  flex-shrink  : 0;
+}
+.profile-color-swatch:hover {
+  transform  : scale(1.2);
+  box-shadow : 0 0 8px var(--swatch-col, #00d4ff);
+}
+.profile-color-swatch.active {
+  border-color: #fff;
+  box-shadow  : 0 0 10px var(--swatch-col, #00d4ff);
+  transform   : scale(1.1);
+}
+
+/* ── Status section ──────────────────────────────────────────── */
+.profile-status-row {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+}
+
+.profile-status-dot {
+  width        : 8px;
+  height       : 8px;
+  border-radius: 50%;
+  background   : #44dd88;
+  box-shadow   : 0 0 6px #44dd8899;
+  flex-shrink  : 0;
+  transition   : background 0.3s, box-shadow 0.3s;
+}
+
+.profile-status-select {
+  flex         : 1;
+  background   : var(--dash-surface);
+  border       : 1px solid var(--dash-border);
+  border-radius: 5px;
+  color        : var(--dash-text);
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  padding      : 6px 10px;
+  outline      : none;
+  cursor       : pointer;
+  transition   : border-color 0.18s;
+}
+.profile-status-select:focus { border-color: rgba(0,212,255,0.4); }

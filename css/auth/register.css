@@ -1,0 +1,138 @@
+/* ----------------------------------------------------
+   REGISTER PANEL � purple-accent overrides for the
+   shared terminal card shown in #panel-register.
+   Layout handled by .auth-panel in login.css.
+---------------------------------------------------- */
+
+/* -- Terminal bar ----------------------------------- */
+.reg-terminal .terminal-bar {
+  border-bottom: 1px solid rgba(123, 45, 248, 0.14);
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.reg-terminal .terminal-id    { color: rgba(123, 45, 248, 0.5); }
+.reg-terminal .terminal-blink { color: var(--color-accent-purple); }
+
+/* -- Heading ---------------------------------------- */
+.reg-terminal .terminal-heading {
+  color: var(--color-accent-purple);
+  text-shadow: 0 0 18px rgba(123, 45, 248, 0.55);
+}
+
+/* Top accent line � dual-color */
+.reg-terminal::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(123, 45, 248, 0.95) 30%,
+    rgba(0, 212, 255, 0.95)  70%,
+    transparent 100%
+  );
+  z-index: 10;
+  animation: topGlowSweep 4s ease-in-out infinite;
+}
+
+@keyframes topGlowSweep {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1;   }
+}
+
+/* -- Field labels ----------------------------------- */
+.reg-terminal .field-label { color: rgba(123, 45, 248, 0.45); }
+
+.reg-terminal .field-group:focus-within .field-label {
+  color: var(--color-accent-purple);
+  text-shadow: 0 0 8px rgba(123, 45, 248, 0.4);
+}
+
+.reg-terminal .field-wrap::after {
+  background: var(--color-accent-purple);
+  box-shadow: 0 0 10px rgba(123, 45, 248, 0.8);
+}
+
+.reg-terminal .field-input:focus { border-bottom-color: rgba(123, 45, 248, 0.55); }
+.reg-terminal .field-input       { caret-color: var(--color-accent-purple); }
+
+/* -- Card glow -------------------------------------- */
+.reg-terminal {
+  border-color: rgba(123, 45, 248, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(123, 45, 248, 0.06),
+    0 0 55px rgba(123, 45, 248, 0.18),
+    0 28px 80px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.reg-terminal:hover {
+  box-shadow:
+    0 0 0 1px rgba(123, 45, 248, 0.14),
+    0 0 60px rgba(123, 45, 248, 0.26),
+    0 32px 90px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* -- Username availability icon --------------------- */
+.field-status {
+  position: absolute;
+  right: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  pointer-events: none;
+  transition: color 0.25s ease;
+}
+
+.field-status[data-state="ok"]       { color: #44dd88; text-shadow: 0 0 8px rgba(68,221,136,0.6); }
+.field-status[data-state="taken"]    { color: #ff4d6a; text-shadow: 0 0 8px rgba(255,77,106,0.5); }
+.field-status[data-state="checking"] { color: rgba(123, 45, 248, 0.6); }
+
+/* -- Password strength bar -------------------------- */
+.password-strength {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  margin-top: 6px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.strength-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+}
+
+/* -- Submit button � purple variant ----------------- */
+.btn-register {
+  border-color: var(--color-accent-purple);
+  color: var(--color-accent-purple);
+}
+
+.btn-register .btn-scan {
+  background: linear-gradient(135deg, var(--color-accent-purple) 0%, #5b1fc0 50%, var(--color-accent-cyan) 100%);
+}
+
+.btn-register:hover:not(:disabled) {
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 28px rgba(123, 45, 248, 0.6), 0 0 60px rgba(123, 45, 248, 0.22);
+  transform: translateY(-2px);
+}
+
+.btn-register:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 0 14px rgba(123, 45, 248, 0.35);
+}
+
+/* -- Footer link ------------------------------------ */
+#panel-register .card-footer-link {
+  color: var(--color-accent-purple);
+}
+#panel-register .card-footer-link:hover {
+  text-shadow: 0 0 10px rgba(123, 45, 248, 0.55);
+}

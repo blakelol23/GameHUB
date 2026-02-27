@@ -1,0 +1,643 @@
+/* ════════════════════════════════════════════════════════════
+   OVERVIEW SECTION
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Hero banner ───────────────────────────────────────────── */
+.ov-hero {
+  position      : relative;
+  display       : flex;
+  align-items   : center;
+  gap           : 20px;
+  padding       : 26px 30px;
+  margin-bottom : 20px;
+  border-radius : 10px;
+  border        : 1px solid rgba(var(--accent-rgb), 0.2);
+  background    : linear-gradient(
+    120deg,
+    rgba(var(--accent-rgb), 0.07) 0%,
+    rgba(11, 12, 20, 0.0) 65%
+  );
+  overflow      : hidden;
+}
+
+.ov-hero::before {
+  content   : '';
+  position  : absolute;
+  top       : 0; left: 0; right: 0;
+  height    : 1px;
+  background: linear-gradient(90deg, var(--dash-accent), transparent 60%);
+  opacity   : 0.55;
+}
+
+.ov-hero-av-wrap { flex-shrink: 0; }
+
+.ov-hero-av {
+  width          : 58px;
+  height         : 58px;
+  border-radius  : 50%;
+  background     : rgba(var(--accent-rgb), 0.1);
+  border         : 2px solid var(--av-col, var(--dash-accent));
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  font-size      : 22px;
+  font-weight    : 700;
+  color          : var(--av-col, var(--dash-accent));
+  text-shadow    : 0 0 12px var(--av-col, var(--dash-accent));
+  box-shadow     : 0 0 20px rgba(var(--accent-rgb), 0.14);
+  position       : relative;
+  overflow       : hidden;
+}
+
+.ov-hero-av-img {
+  position     : absolute;
+  inset        : 0;
+  width        : 100%;
+  height       : 100%;
+  border-radius: 50%;
+  object-fit   : cover;
+}
+
+.ov-hero-body {
+  flex          : 1;
+  display       : flex;
+  flex-direction: column;
+  gap           : 7px;
+}
+
+.ov-hero-label {
+  font-size     : 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color         : var(--dash-accent);
+  opacity       : 0.55;
+}
+
+.ov-hero-title {
+  font-size     : 22px;
+  letter-spacing: 0.04em;
+  color         : #e8ecf8;
+  line-height   : 1.2;
+}
+
+.ov-hero-title > span:first-child {
+  color      : var(--dash-accent);
+  text-shadow: 0 0 18px rgba(var(--accent-rgb), 0.4);
+}
+
+/* Inline role badge */
+.ov-role-badge {
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  letter-spacing: 0.16em;
+  padding       : 2px 7px;
+  border-radius : 3px;
+  border        : 1px solid rgba(var(--accent-rgb), 0.3);
+  color         : var(--dash-accent);
+  background    : rgba(var(--accent-rgb), 0.07);
+  vertical-align: middle;
+  margin-left   : 8px;
+  text-transform: uppercase;
+}
+.ov-role-badge[data-role="owner"] { border-color:rgba(245,166,35,0.4);  color:#f5a623; background:rgba(245,166,35,0.07); }
+.ov-role-badge[data-role="admin"] { border-color:rgba(168,85,247,0.4);  color:#a855f7; background:rgba(168,85,247,0.07); }
+.ov-role-badge[data-role="mod"]   { border-color:rgba(68,221,136,0.4);  color:#44dd88; background:rgba(68,221,136,0.07); }
+
+/* Status / session pills */
+.ov-hero-pills {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+  flex-wrap  : wrap;
+}
+
+.ov-pill {
+  display       : inline-flex;
+  align-items   : center;
+  gap           : 5px;
+  font-family   : var(--font-mono);
+  font-size     : 9.5px;
+  letter-spacing: 0.1em;
+  padding       : 3px 10px;
+  border-radius : 20px;
+  border        : 1px solid var(--dash-border);
+  background    : var(--dash-surface3);
+  color         : var(--dash-text-dim);
+}
+
+.ov-pill--online {
+  border-color: rgba(68,221,136,0.3);
+  color       : #44dd88;
+  background  : rgba(68,221,136,0.06);
+}
+
+.ov-dot {
+  width        : 5px;
+  height       : 5px;
+  border-radius: 50%;
+  background   : var(--dash-text-faint);
+  flex-shrink  : 0;
+}
+.ov-dot--on { background: #44dd88; box-shadow: 0 0 5px rgba(68,221,136,0.6); }
+
+/* Watermark */
+.ov-hero-wm {
+  position      : absolute;
+  bottom        : 10px;
+  right         : 22px;
+  font-size     : 64px;
+  line-height   : 1;
+  font-weight   : 900;
+  letter-spacing: -0.04em;
+  color         : rgba(var(--accent-rgb), 0.04);
+  pointer-events: none;
+  user-select   : none;
+}
+
+/* ── Stats row ─────────────────────────────────────────────── */
+.ov-stats {
+  display              : grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap                  : 12px;
+  margin-bottom        : 18px;
+}
+
+.ov-stat {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding      : 16px 18px;
+  display      : flex;
+  flex-direction: column;
+  gap          : 8px;
+  position     : relative;
+  overflow     : hidden;
+  transition   : border-color 0.2s, box-shadow 0.2s;
+}
+
+.ov-stat::after {
+  content      : '';
+  position     : absolute;
+  top: 0; left: 0; right: 0;
+  height       : 2px;
+  background   : var(--sc, var(--dash-accent));
+  opacity      : 0.5;
+  border-radius: 8px 8px 0 0;
+}
+
+.ov-stat:hover {
+  border-color: rgba(var(--accent-rgb), 0.2);
+  box-shadow  : 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.ov-stat-top {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+}
+
+.ov-stat-label {
+  font-size     : 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color         : var(--dash-text-dim);
+}
+
+.ov-stat-icon {
+  width          : 15px;
+  height         : 15px;
+  stroke         : var(--sc, var(--dash-accent));
+  fill           : none;
+  stroke-width   : 1.8;
+  stroke-linecap : round;
+  stroke-linejoin: round;
+  opacity        : 0.55;
+}
+
+.ov-stat-val {
+  font-size     : 30px;
+  letter-spacing: 0.03em;
+  color         : #e8ecf8;
+  line-height   : 1;
+}
+
+.ov-stat-sub {
+  font-size     : 9.5px;
+  color         : var(--dash-text-faint);
+  letter-spacing: 0.07em;
+}
+
+/* ── Two-column grid ───────────────────────────────────────── */
+.ov-grid {
+  display              : grid;
+  grid-template-columns: 1fr 1fr;
+  gap                  : 16px;
+  margin-bottom        : 16px;
+}
+
+/* ── Panel card ────────────────────────────────────────────── */
+.ov-panel {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 8px;
+  overflow     : hidden;
+  margin-bottom: 16px;
+}
+
+.ov-grid .ov-panel { margin-bottom: 0; }
+.ov-panel--wide   { margin-bottom: 0; }
+
+.ov-panel-head {
+  display      : flex;
+  align-items  : center;
+  gap          : 7px;
+  padding      : 12px 18px;
+  border-bottom: 1px solid var(--dash-border2);
+}
+
+.ov-panel-title {
+  font-size     : 10.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color         : var(--dash-text-dim);
+  flex          : 1;
+}
+
+.ov-count-badge {
+  font-family   : var(--font-mono);
+  font-size     : 10px;
+  padding       : 1px 7px;
+  border-radius : 20px;
+  background    : rgba(var(--accent-rgb), 0.1);
+  border        : 1px solid rgba(var(--accent-rgb), 0.2);
+  color         : var(--dash-accent);
+  min-width     : 22px;
+  text-align    : center;
+}
+
+/* ── Online friends list ───────────────────────────────────── */
+.ov-online-list {
+  max-height    : 230px;
+  overflow-y    : auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--accent-rgb), 0.15) transparent;
+}
+
+.ov-friend-row {
+  display    : flex;
+  align-items: center;
+  gap        : 11px;
+  padding    : 9px 16px;
+  transition : background 0.15s;
+}
+.ov-friend-row:hover { background: rgba(var(--accent-rgb), 0.03); }
+
+.ov-fav {
+  width          : 34px;
+  height         : 34px;
+  border-radius  : 50%;
+  flex-shrink    : 0;
+  background     : rgba(var(--accent-rgb), 0.08);
+  border         : 1px solid var(--av-col, var(--dash-accent));
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  font-size      : 13px;
+  font-weight    : 700;
+  color          : var(--av-col, var(--dash-accent));
+  position       : relative;
+  overflow       : hidden;
+}
+
+.ov-fav-img {
+  position     : absolute;
+  inset        : 0;
+  width        : 100%;
+  height       : 100%;
+  border-radius: 50%;
+  object-fit   : cover;
+}
+
+.ov-friend-info {
+  flex     : 1;
+  min-width: 0;
+  display  : flex;
+  flex-direction: column;
+  gap      : 3px;
+}
+
+.ov-friend-name {
+  font-size    : 11.5px;
+  color        : var(--dash-text);
+  white-space  : nowrap;
+  overflow     : hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-friend-sub {
+  font-size  : 9.5px;
+  color      : #44dd88;
+  display    : flex;
+  align-items: center;
+  gap        : 5px;
+}
+
+.ov-msg-btn {
+  background   : none;
+  border       : 1px solid rgba(var(--accent-rgb), 0.15);
+  border-radius: 5px;
+  padding      : 5px 7px;
+  cursor       : pointer;
+  color        : var(--dash-accent);
+  opacity      : 0.5;
+  display      : flex;
+  align-items  : center;
+  transition   : opacity 0.15s, border-color 0.15s, background 0.15s;
+}
+.ov-msg-btn:hover {
+  opacity     : 1;
+  border-color: rgba(var(--accent-rgb), 0.4);
+  background  : rgba(var(--accent-rgb), 0.07);
+}
+.ov-msg-btn svg {
+  width          : 13px;
+  height         : 13px;
+  stroke         : currentColor;
+  fill           : none;
+  stroke-width   : 1.8;
+  stroke-linecap : round;
+  stroke-linejoin: round;
+}
+
+/* ── Quick actions grid ────────────────────────────────────── */
+.ov-actions {
+  display              : grid;
+  grid-template-columns: 1fr 1fr;
+  gap                  : 10px;
+  padding              : 14px;
+}
+
+.ov-action-btn {
+  display      : flex;
+  align-items  : center;
+  gap          : 10px;
+  padding      : 13px 14px;
+  background   : var(--dash-surface3);
+  border       : 1px solid var(--dash-border2);
+  border-radius: 7px;
+  cursor       : pointer;
+  font-family  : var(--font-mono);
+  font-size    : 10.5px;
+  letter-spacing: 0.09em;
+  color        : var(--dash-text-dim);
+  text-transform: uppercase;
+  transition   : all 0.18s;
+  text-align   : left;
+}
+
+.ov-action-btn svg {
+  width          : 14px;
+  height         : 14px;
+  stroke         : var(--dash-accent);
+  opacity        : 0.6;
+  fill           : none;
+  stroke-width   : 1.8;
+  stroke-linecap : round;
+  stroke-linejoin: round;
+  flex-shrink    : 0;
+}
+
+.ov-action-btn:hover {
+  color       : var(--dash-text);
+  background  : rgba(var(--accent-rgb), 0.06);
+  border-color: rgba(var(--accent-rgb), 0.22);
+}
+
+.ov-action-btn:hover svg { opacity: 1; }
+
+/* ── Activity feed ─────────────────────────────────────────── */
+.activity-feed {
+  display       : flex;
+  flex-direction: column;
+  padding       : 4px 0;
+}
+
+.activity-item {
+  display    : flex;
+  align-items: center;
+  gap        : 12px;
+  padding    : 9px 18px;
+  transition : background 0.15s;
+}
+.activity-item:hover { background: rgba(var(--accent-rgb), 0.03); }
+
+.activity-dot {
+  width        : 5px;
+  height       : 5px;
+  border-radius: 50%;
+  background   : var(--dash-accent);
+  flex-shrink  : 0;
+  opacity      : 0.45;
+}
+
+.activity-text {
+  flex       : 1;
+  font-size  : 11.5px;
+  color      : var(--dash-text-dim);
+  line-height: 1.4;
+}
+.activity-text strong { color: var(--dash-text); font-weight: 600; }
+
+.activity-time {
+  font-size     : 9.5px;
+  color         : var(--dash-text-faint);
+  letter-spacing: 0.06em;
+  flex-shrink   : 0;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+.content-sm .ov-stats,
+.content-md .ov-stats { grid-template-columns: repeat(2, 1fr); }
+
+.content-sm .ov-grid,
+.content-md .ov-grid  { grid-template-columns: 1fr; }
+
+/* ── Friend sub-text game variant ──────────────────────────── */
+.ov-friend-sub--game {
+  font-size  : 9.5px;
+  color      : #00d4ff;
+  display    : flex;
+  align-items: center;
+  gap        : 4px;
+  opacity    : 0.85;
+}
+
+/* ── Panel head action button ──────────────────────────────── */
+.ov-panel-action-btn {
+  display       : inline-flex;
+  align-items   : center;
+  gap           : 5px;
+  background    : none;
+  border        : 1px solid rgba(var(--accent-rgb), 0.15);
+  border-radius : 5px;
+  padding       : 4px 9px;
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color         : var(--dash-text-dim);
+  cursor        : pointer;
+  transition    : all 0.15s;
+}
+.ov-panel-action-btn svg {
+  width       : 11px;
+  height      : 11px;
+  stroke      : var(--dash-accent);
+  fill        : none;
+  stroke-width: 1.8;
+  flex-shrink : 0;
+}
+.ov-panel-action-btn:hover {
+  color       : var(--dash-text);
+  border-color: rgba(var(--accent-rgb), 0.35);
+  background  : rgba(var(--accent-rgb), 0.06);
+}
+
+/* ── Live pip + label (Now Playing panel head) ─────────────── */
+.ov-live-pip {
+  width        : 6px;
+  height       : 6px;
+  border-radius: 50%;
+  background   : #ff4d6a;
+  flex-shrink  : 0;
+  animation    : ov-live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ov-live-pulse {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 0 0 rgba(255,77,106,0.5); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 5px rgba(255,77,106,0); }
+}
+.ov-live-label {
+  font-family   : var(--font-mono);
+  font-size     : 8.5px;
+  letter-spacing: 0.15em;
+  color         : #ff4d6a;
+  opacity       : 0.75;
+}
+
+/* ── Now Playing rows ──────────────────────────────────────── */
+.ov-playing-row {
+  border-left : 2px solid rgba(var(--accent-rgb), 0.2);
+  margin-left : 2px;
+}
+
+.ov-playing-indicator {
+  width        : 6px;
+  height       : 6px;
+  border-radius: 50%;
+  background   : #44dd88;
+  flex-shrink  : 0;
+  animation    : ov-live-pulse-g 1.8s ease-in-out infinite;
+}
+@keyframes ov-live-pulse-g {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 0 0 rgba(68,221,136,0.5); }
+  50%       { opacity: 0.65; box-shadow: 0 0 0 5px rgba(68,221,136,0); }
+}
+
+.ov-playing-time {
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  color         : var(--dash-text-faint);
+  letter-spacing: 0.06em;
+  flex-shrink   : 0;
+}
+
+/* ── Recently Played panel ─────────────────────────────────── */
+.ov-recently-list {
+  display       : flex;
+  flex-direction: column;
+}
+
+.ov-recently-row {
+  display    : flex;
+  align-items: center;
+  gap        : 12px;
+  padding    : 10px 18px;
+  cursor     : pointer;
+  transition : background 0.15s;
+  border-bottom: 1px solid var(--dash-border2);
+}
+.ov-recently-row:last-child { border-bottom: none; }
+.ov-recently-row:hover  { background: rgba(var(--accent-rgb), 0.04); }
+
+.ov-recently-icon {
+  width         : 32px;
+  height        : 32px;
+  border-radius : 7px;
+  background    : rgba(var(--accent-rgb), 0.07);
+  border        : 1px solid var(--dash-border2);
+  display       : flex;
+  align-items   : center;
+  justify-content: center;
+  flex-shrink   : 0;
+}
+.ov-recently-icon svg {
+  width          : 14px;
+  height         : 14px;
+  stroke         : var(--dash-accent);
+  fill           : none;
+  stroke-width   : 1.5;
+  opacity        : 0.6;
+  stroke-linecap : round;
+  stroke-linejoin: round;
+}
+
+.ov-recently-info {
+  flex          : 1;
+  min-width     : 0;
+  display       : flex;
+  flex-direction: column;
+  gap           : 3px;
+}
+
+.ov-recently-title {
+  font-size    : 12px;
+  color        : var(--dash-text);
+  white-space  : nowrap;
+  overflow     : hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-recently-meta {
+  font-family   : var(--font-mono);
+  font-size     : 9.5px;
+  color         : var(--dash-accent);
+  opacity       : 0.65;
+  letter-spacing: 0.06em;
+}
+
+.ov-recently-time {
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  color         : var(--dash-text-faint);
+  letter-spacing: 0.05em;
+  flex-shrink   : 0;
+}
+
+.ov-recently-empty {
+  padding   : 24px 18px;
+  font-size : 11.5px;
+  color     : var(--dash-text-faint);
+}
+
+.ov-recently-cta {
+  background    : none;
+  border        : none;
+  color         : var(--dash-accent);
+  cursor        : pointer;
+  font-size     : 11.5px;
+  padding       : 0;
+  opacity       : 0.75;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ov-recently-cta:hover { opacity: 1; }

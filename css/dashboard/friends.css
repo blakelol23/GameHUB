@@ -1,0 +1,707 @@
+/* ════════════════════════════════════════════════════════════
+   FRIENDS  (fr-*)
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Stats strip ───────────────────────────────────────────── */
+.fr-stats {
+  display              : grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap                  : 12px;
+  margin-bottom        : 22px;
+}
+
+.fr-stat {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding      : 14px 18px;
+  display      : flex;
+  flex-direction: column;
+  gap          : 4px;
+}
+
+.fr-stat-val {
+  font-size     : 22px;
+  font-weight   : 700;
+  color         : var(--dash-text);
+  letter-spacing: -0.02em;
+  line-height   : 1;
+}
+
+.fr-stat-lbl {
+  font-family   : var(--font-mono);
+  font-size     : 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color         : var(--dash-text-faint);
+}
+
+.fr-stat--green  .fr-stat-val { color: #44dd88; }
+.fr-stat--purple .fr-stat-val { color: #a855f7; }
+
+/* ── Add bar ───────────────────────────────────────────────── */
+.fr-add-bar {
+  display      : flex;
+  gap          : 10px;
+  margin-bottom: 6px;
+}
+
+.fr-add-wrap {
+  position: relative;
+  flex    : 1;
+}
+
+.fr-add-wrap svg {
+  position      : absolute;
+  left          : 11px;
+  top           : 50%;
+  transform     : translateY(-50%);
+  width         : 13px;
+  height        : 13px;
+  stroke        : var(--dash-text-faint);
+  fill          : none;
+  stroke-width  : 1.8;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.fr-add-input {
+  width        : 100%;
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 6px;
+  color        : var(--dash-text);
+  font-family  : var(--font-mono);
+  font-size    : 11.5px;
+  padding      : 9px 12px 9px 34px;
+  outline      : none;
+  transition   : border-color 0.18s, box-shadow 0.18s;
+  box-sizing   : border-box;
+}
+
+.fr-add-input::placeholder { color: var(--dash-text-faint); }
+
+.fr-add-input:focus {
+  border-color: rgba(0,212,255,0.4);
+  box-shadow  : 0 0 0 2px rgba(0,212,255,0.06);
+}
+
+/* ── Status feedback ───────────────────────────────────────── */
+.fr-status {
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  min-height   : 20px;
+  line-height  : 20px;
+  margin-bottom: 12px;
+}
+.fr-status--ok  { color: #44dd88; }
+.fr-status--err { color: #ff4d6a; }
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.fr-tabs {
+  display      : flex;
+  gap          : 2px;
+  border-bottom: 1px solid var(--dash-border);
+  margin-bottom: 16px;
+}
+
+.fr-tab {
+  position      : relative;
+  font-family   : var(--font-mono);
+  font-size     : 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color         : var(--dash-text-faint);
+  padding       : 8px 16px 11px;
+  background    : none;
+  border        : none;
+  cursor        : pointer;
+  transition    : color 0.18s;
+}
+
+.fr-tab::after {
+  content   : '';
+  position  : absolute;
+  bottom    : -1px;
+  left      : 0;
+  right     : 0;
+  height    : 2px;
+  background: var(--dash-accent);
+  opacity   : 0;
+  transition: opacity 0.18s;
+}
+
+.fr-tab:hover         { color: var(--dash-text); }
+.fr-tab.active        { color: var(--dash-accent); }
+.fr-tab.active::after { opacity: 1; }
+
+.fr-badge {
+  display        : inline-flex;
+  align-items    : center;
+  justify-content: center;
+  min-width      : 16px;
+  height         : 16px;
+  border-radius  : 8px;
+  background     : rgba(0,212,255,0.13);
+  color          : var(--dash-accent);
+  font-size      : 9px;
+  padding        : 0 4px;
+  margin-left    : 5px;
+  vertical-align : middle;
+}
+
+/* ── List container ────────────────────────────────────────── */
+.fr-list {
+  display       : flex;
+  flex-direction: column;
+  gap           : 2px;
+  min-height    : 60px;
+}
+
+/* ── Friend row item ───────────────────────────────────────── */
+.fr-item {
+  display    : flex;
+  align-items: center;
+  gap        : 12px;
+  padding    : 11px 14px;
+  border-radius: 7px;
+  border     : 1px solid transparent;
+  transition : background 0.18s, border-color 0.18s;
+}
+
+.fr-item:hover {
+  background  : rgba(0,212,255,0.03);
+  border-color: rgba(0,212,255,0.09);
+}
+
+.fr-item--incoming { border-left: 2px solid rgba(168,85,247,0.35); }
+.fr-item--sent     { opacity: 0.82; }
+
+/* ── Avatar ────────────────────────────────────────────────── */
+.fr-av-wrap {
+  position   : relative;
+  flex-shrink: 0;
+}
+
+.fr-av {
+  width        : 38px;
+  height       : 38px;
+  border-radius: 50%;
+  background   : radial-gradient(circle at 35% 35%,
+                   rgba(0,212,255,0.12), rgba(95,50,210,0.22));
+  border       : 1px solid color-mix(in srgb, var(--avc, #00d4ff) 35%, transparent);
+  color        : var(--avc, #00d4ff);
+  display      : flex;
+  align-items  : center;
+  justify-content: center;
+  font-size    : 15px;
+  font-weight  : 600;
+  position     : relative;
+  overflow     : hidden;
+}
+
+.fr-av-photo {
+  position     : absolute;
+  inset        : 0;
+  width        : 100%;
+  height       : 100%;
+  object-fit   : cover;
+  border-radius: 50%;
+}
+
+.fr-dot {
+  position     : absolute;
+  bottom       : 0;
+  right        : 0;
+  width        : 10px;
+  height       : 10px;
+  border-radius: 50%;
+  border       : 2px solid var(--dash-surface);
+}
+
+/* ── Info column ────────────────────────────────────────────── */
+.fr-info {
+  flex     : 1;
+  min-width: 0;
+}
+
+.fr-name {
+  font-size     : 12px;
+  letter-spacing: 0.06em;
+  color         : var(--dash-text);
+  text-transform: uppercase;
+  white-space   : nowrap;
+  overflow      : hidden;
+  text-overflow : ellipsis;
+  display       : flex;
+  align-items   : center;
+  gap           : 6px;
+}
+
+.fr-name--dim { opacity: 0.4; }
+
+.fr-sub {
+  font-size : 10px;
+  color     : var(--dash-text-faint);
+  margin-top: 2px;
+}
+
+.fr-sub--in  { color: rgba(168,85,247,0.75); }
+.fr-sub--out { color: rgba(180,190,215,0.32); font-style: italic; }
+
+/* ── Role badge ─────────────────────────────────────────────── */
+.fr-role {
+  font-family   : var(--font-mono);
+  font-size     : 8px;
+  letter-spacing: 0.12em;
+  padding       : 2px 5px;
+  border-radius : 3px;
+  text-transform: uppercase;
+  flex-shrink   : 0;
+}
+
+.fr-role[data-role="owner"] { background: rgba(245,166,35,0.15);  color: #f5a623; border: 1px solid rgba(245,166,35,0.3);  }
+.fr-role[data-role="admin"] { background: rgba(168,85,247,0.15);  color: #a855f7; border: 1px solid rgba(168,85,247,0.3);  }
+.fr-role[data-role="mod"]   { background: rgba(68,221,136,0.12);  color: #44dd88; border: 1px solid rgba(68,221,136,0.25); }
+
+/* ── Action buttons ─────────────────────────────────────────── */
+.fr-actions {
+  display   : flex;
+  gap       : 6px;
+  flex-shrink: 0;
+}
+
+.fr-btn {
+  font-family   : var(--font-mono);
+  font-size     : 10.5px;
+  letter-spacing: 0.06em;
+  padding       : 5px 12px;
+  border-radius : 5px;
+  cursor        : pointer;
+  border        : 1px solid;
+  background    : none;
+  transition    : background 0.18s, border-color 0.18s, color 0.18s;
+  white-space   : nowrap;
+}
+
+.fr-btn--msg    { color: var(--dash-accent); border-color: rgba(0,212,255,0.28); }
+.fr-btn--msg:hover    { background: rgba(0,212,255,0.08);  border-color: rgba(0,212,255,0.55); }
+
+.fr-btn--accept { color: #44dd88; border-color: rgba(68,221,136,0.35); }
+.fr-btn--accept:hover { background: rgba(68,221,136,0.09); border-color: rgba(68,221,136,0.6); }
+
+.fr-btn--del    { color: #ff4d6a; border-color: rgba(255,77,106,0.28); }
+.fr-btn--del:hover    { background: rgba(255,77,106,0.08);  border-color: rgba(255,77,106,0.55); }
+
+/* ── Section labels ─────────────────────────────────────────── */
+.fr-section-lbl {
+  font-family   : var(--font-mono);
+  font-size     : 8.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color         : rgba(180,190,215,0.3);
+  padding       : 6px 2px 4px;
+  margin        : 0;
+}
+
+.fr-section-lbl--gap { margin-top: 12px; }
+
+/* ── Empty state ────────────────────────────────────────────── */
+.fr-empty {
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+  padding       : 52px 24px;
+  gap           : 10px;
+}
+
+.fr-empty svg {
+  width     : 36px;
+  height    : 36px;
+  stroke    : rgba(180,190,215,0.2);
+  flex-shrink: 0;
+}
+
+.fr-empty-title {
+  font-family   : var(--font-mono);
+  font-size     : 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color         : rgba(180,190,215,0.4);
+  margin        : 0;
+}
+
+.fr-empty-sub {
+  font-size : 11px;
+  color     : rgba(180,190,215,0.25);
+  margin    : 0;
+  text-align: center;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .fr-stats { grid-template-columns: 1fr 1fr; }
+  .fr-btn   { font-size: 10px; padding: 4px 9px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Legacy selectors below — kept so nothing breaks
+   ───────────────────────────────────────────────────────────── */
+.friends-layout {
+  display              : grid;
+  grid-template-columns: 1fr 300px;
+  gap                  : 20px;
+  align-items          : start;
+}
+
+@media (max-width: 860px) {
+  .friends-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Add friend bar ────────────────────────────────────────── */
+.friends-add-bar {
+  display: flex;
+  gap    : 10px;
+  margin-bottom: 20px;
+}
+
+.friends-add-input-wrap {
+  position: relative;
+  flex    : 1;
+}
+
+.friends-add-input-wrap svg {
+  position: absolute;
+  left    : 11px;
+  top     : 50%;
+  transform: translateY(-50%);
+  width   : 13px;
+  height  : 13px;
+  stroke  : var(--dash-text-faint);
+  fill    : none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.friends-add-input {
+  width       : 100%;
+  background  : var(--dash-surface2);
+  border      : 1px solid var(--dash-border);
+  border-radius: 6px;
+  color       : var(--dash-text);
+  font-family : var(--font-mono);
+  font-size   : 11.5px;
+  padding     : 9px 12px 9px 34px;
+  outline     : none;
+  transition  : border-color 0.18s;
+  box-sizing  : border-box;
+}
+
+.friends-add-input::placeholder { color: var(--dash-text-faint); }
+
+.friends-add-input:focus {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow  : 0 0 0 2px rgba(0, 212, 255, 0.06);
+}
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.friends-tabs {
+  display      : flex;
+  gap          : 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--dash-border);
+  padding-bottom: 0;
+}
+
+.friends-tab {
+  position  : relative;
+  font-family: var(--font-mono);
+  font-size : 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color     : var(--dash-text-faint);
+  padding   : 8px 16px 10px;
+  background: none;
+  border    : none;
+  cursor    : pointer;
+  transition: color 0.18s;
+}
+
+.friends-tab::after {
+  content   : '';
+  position  : absolute;
+  bottom    : -1px;
+  left      : 0;
+  right     : 0;
+  height    : 2px;
+  background: var(--dash-accent);
+  opacity   : 0;
+  transition: opacity 0.18s;
+}
+
+.friends-tab:hover { color: var(--dash-text); }
+
+.friends-tab.active {
+  color: var(--dash-accent);
+}
+
+.friends-tab.active::after {
+  opacity: 1;
+}
+
+.friends-tab-badge {
+  display      : inline-flex;
+  align-items  : center;
+  justify-content: center;
+  min-width    : 16px;
+  height       : 16px;
+  border-radius: 8px;
+  background   : rgba(0, 212, 255, 0.15);
+  color        : var(--dash-accent);
+  font-size    : 9px;
+  padding      : 0 4px;
+  margin-left  : 5px;
+  vertical-align: middle;
+}
+
+/* ── Friend item ───────────────────────────────────────────── */
+.friend-item {
+  display    : flex;
+  align-items: center;
+  gap        : 12px;
+  padding    : 12px 14px;
+  border-radius: 7px;
+  border     : 1px solid transparent;
+  transition : background 0.18s, border-color 0.18s;
+}
+
+.friend-item:hover {
+  background  : rgba(0, 212, 255, 0.03);
+  border-color: rgba(0, 212, 255, 0.08);
+}
+
+.friend-avatar {
+  width        : 36px;
+  height       : 36px;
+  border-radius: 50%;
+  background   : radial-gradient(circle at 35% 35%, rgba(0, 212, 255, 0.18), rgba(95, 50, 210, 0.25));
+  border       : 1px solid rgba(0, 212, 255, 0.2);
+  display      : flex;
+  align-items  : center;
+  justify-content: center;
+  font-size    : 14px;
+  color        : var(--dash-accent);
+  flex-shrink  : 0;
+}
+
+.friend-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name {
+  font-size     : 12px;
+  letter-spacing: 0.06em;
+  color         : var(--dash-text);
+  text-transform: uppercase;
+  white-space   : nowrap;
+  overflow      : hidden;
+  text-overflow : ellipsis;
+}
+
+.friend-status {
+  font-size  : 10px;
+  color      : var(--dash-text-faint);
+  margin-top : 2px;
+}
+
+.friend-status--online {
+  color: var(--dash-green);
+}
+
+.friend-online-dot {
+  display      : inline-block;
+  width        : 5px;
+  height       : 5px;
+  border-radius: 50%;
+  background   : var(--dash-green);
+  margin-right : 4px;
+  vertical-align: middle;
+  box-shadow   : 0 0 4px rgba(68, 221, 136, 0.6);
+}
+
+.friend-actions {
+  display: flex;
+  gap    : 6px;
+}
+
+/* ── Online now panel (right column) ───────────────────────── */
+.friends-online-panel {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding      : 18px 16px;
+}
+
+.friends-online-panel-title {
+  font-size     : 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color         : var(--dash-accent);
+  opacity       : 0.7;
+  margin-bottom : 14px;
+  display       : flex;
+  align-items   : center;
+  gap           : 6px;
+}
+
+.friends-online-panel-title::before {
+  content      : '';
+  display      : inline-block;
+  width        : 6px;
+  height       : 6px;
+  border-radius: 50%;
+  background   : var(--dash-green);
+  box-shadow   : 0 0 6px rgba(68, 221, 136, 0.6);
+}
+
+/* ── Friends list container ────────────────────────────────── */
+#friends-list {
+  display       : flex;
+  flex-direction: column;
+  gap           : 2px;
+  min-height    : 48px;
+}
+
+/* ── Status message (add / error feedback) ─────────────────── */
+.friends-status-msg {
+  font-family: var(--font-mono);
+  font-size  : 11px;
+  height     : 18px;
+  line-height: 18px;
+  transition : opacity 0.3s;
+  margin-top : 6px;
+  margin-bottom: 2px;
+}
+
+.friends-status-msg--ok  { color: var(--dash-green); }
+.friends-status-msg--err { color: #ff4d6a; }
+
+/* ── Remove / request action buttons ──────────────────────── */
+.friend-remove-btn {
+  background   : none;
+  border       : 1px solid rgba(255, 77, 106, 0.3);
+  border-radius: 5px;
+  color        : #ff4d6a;
+  cursor       : pointer;
+  padding      : 4px 10px;
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  letter-spacing: 0.04em;
+  transition   : background 0.18s, border-color 0.18s;
+}
+
+.friend-remove-btn:hover {
+  background  : rgba(255, 77, 106, 0.08);
+  border-color: rgba(255, 77, 106, 0.55);
+}
+
+.friend-accept-btn {
+  background   : none;
+  border       : 1px solid rgba(68, 221, 136, 0.35);
+  border-radius: 5px;
+  color        : #44dd88;
+  cursor       : pointer;
+  padding      : 4px 10px;
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  letter-spacing: 0.04em;
+  transition   : background 0.18s, border-color 0.18s;
+}
+
+.friend-accept-btn:hover {
+  background  : rgba(68, 221, 136, 0.08);
+  border-color: rgba(68, 221, 136, 0.6);
+}
+
+.friend-msg-btn {
+  background   : none;
+  border       : 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 5px;
+  color        : var(--dash-accent);
+  cursor       : pointer;
+  padding      : 4px 10px;
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  letter-spacing: 0.04em;
+  transition   : background 0.18s, border-color 0.18s;
+}
+
+.friend-msg-btn:hover {
+  background  : rgba(0, 212, 255, 0.07);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+/* ── Pending section labels ────────────────────────────────── */
+.requests-section-label {
+  font-family   : var(--font-mono);
+  font-size     : 8.5px;
+  letter-spacing: 0.2em;
+  color         : rgba(180, 190, 215, 0.28);
+  padding       : 4px 2px 3px;
+  margin-top    : 2px;
+}
+.requests-section-label--gap { margin-top: 14px; }
+
+/* Incoming request item */
+.friend-item--incoming {
+  border-left: 2px solid rgba(0, 212, 255, 0.3);
+}
+/* Sent request item */
+.friend-item--sent {
+  border-left: 2px solid rgba(180, 190, 215, 0.12);
+  opacity    : 0.85;
+}
+.friend-avatar--faded { opacity: 0.52; }
+
+.friend-status--in  { color: rgba(0, 212, 255, 0.6) !important; }
+.friend-status--out {
+  color      : rgba(180, 190, 215, 0.35) !important;
+  font-style : italic;
+}
+
+/* Cancel sent-request button */
+.friend-cancel-btn {
+  background   : none;
+  border       : 1px solid rgba(255, 77, 106, 0.22);
+  border-radius: 5px;
+  color        : rgba(255, 77, 106, 0.55);
+  cursor       : pointer;
+  padding      : 4px 10px;
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  letter-spacing: 0.04em;
+  transition   : background 0.18s, border-color 0.18s, color 0.18s;
+}
+.friend-cancel-btn:hover {
+  background  : rgba(255, 77, 106, 0.07);
+  border-color: rgba(255, 77, 106, 0.55);
+  color       : rgba(255, 77, 106, 1);
+}
+
+/* ── Pending request item variant ──────────────────────────── */
+.friend-item--request {
+  border-color: rgba(0, 212, 255, 0.1);
+  background  : rgba(0, 212, 255, 0.02);
+}
+
+/* ── Friends input + add-btn accent fix ────────────────────── */
+.friends-add-input:focus {
+  border-color: rgba(var(--accent-rgb), 0.4);
+  box-shadow  : 0 0 0 2px rgba(var(--accent-rgb), 0.06);
+}
+
+.friends-tab.active           { color: rgba(var(--accent-rgb), 1); }
+.friends-tab.active::after    { background: rgba(var(--accent-rgb), 1); }
+.friends-tab-badge            { background: rgba(var(--accent-rgb), 0.14); color: rgba(var(--accent-rgb), 1); }

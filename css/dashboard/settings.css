@@ -1,0 +1,325 @@
+/* ════════════════════════════════════════════════════════════
+   SETTINGS SECTION
+   ════════════════════════════════════════════════════════════ */
+
+.settings-layout {
+  max-width: 600px;
+  display  : flex;
+  flex-direction: column;
+  gap      : 20px;
+}
+
+/* ── Group ─────────────────────────────────────────────────── */
+.settings-group {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 8px;
+  overflow     : hidden;
+}
+
+.settings-group-header {
+  padding      : 14px 20px;
+  border-bottom: 1px solid var(--dash-border);
+  display      : flex;
+  align-items  : center;
+  gap          : 8px;
+}
+
+.settings-group-header svg {
+  width  : 14px;
+  height : 14px;
+  stroke : var(--dash-accent);
+  opacity: 0.6;
+  fill   : none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.settings-group-title {
+  font-size     : 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color         : var(--dash-text-dim);
+}
+
+.settings-group-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap    : 16px;
+}
+
+/* ── Field group ───────────────────────────────────────────── */
+.settings-field {
+  display       : flex;
+  flex-direction: column;
+  gap           : 6px;
+}
+
+.settings-field-row {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  gap            : 16px;
+}
+.settings-field-row--wrap { flex-wrap: wrap; align-items: flex-start; }
+
+.settings-field-info {
+  flex: 1;
+}
+
+.settings-field-name {
+  font-size     : 11.5px;
+  color         : var(--dash-text);
+  letter-spacing: 0.04em;
+}
+
+.settings-field-desc {
+  font-size  : 10.5px;
+  color      : var(--dash-text-faint);
+  margin-top : 3px;
+  line-height: 1.5;
+}
+
+/* ── Divider between settings rows ────────────────────────── */
+.settings-row-divider {
+  height    : 1px;
+  background: var(--dash-border2);
+  margin    : 2px 0;
+}
+
+/* ── Danger zone ───────────────────────────────────────────── */
+.settings-group--danger {
+  border-color: rgba(255, 77, 106, 0.2);
+}
+
+.settings-group--danger .settings-group-header {
+  border-bottom-color: rgba(255, 77, 106, 0.15);
+}
+
+.settings-group--danger .settings-group-header svg {
+  stroke  : var(--dash-red);
+  opacity : 0.7;
+}
+
+.settings-group--danger .settings-group-title {
+  color: rgba(255, 77, 106, 0.75);
+}
+
+/* ── Toggle switch ───────────────────────────────────────────────────────────── */
+.dash-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.dash-toggle input { display:none; }
+.dash-toggle-track {
+  display: block;
+  width: 40px; height: 22px;
+  background: var(--glass-bg, rgba(255,255,255,.07));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  position: relative;
+  transition: background .2s, border-color .2s;
+}
+.dash-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.35);
+  transition: transform .2s, background .2s;
+}
+.dash-toggle input:checked + .dash-toggle-track {
+  background: rgba(var(--accent-rgb,0,212,255),.25);
+  border-color: rgba(var(--accent-rgb,0,212,255),.5);
+}
+.dash-toggle input:checked + .dash-toggle-track::after {
+  transform: translateX(18px);
+  background: rgb(var(--accent-rgb,0,212,255));
+}
+ ─────────────────────────────────────────── */
+.settings-toggle {
+  position     : relative;
+  width        : 38px;
+  height       : 20px;
+  flex-shrink  : 0;
+}
+
+.settings-toggle input {
+  opacity : 0;
+  width   : 0;
+  height  : 0;
+  position: absolute;
+}
+
+.settings-toggle-track {
+  position     : absolute;
+  inset        : 0;
+  background   : var(--dash-surface3);
+  border       : 1px solid var(--dash-border);
+  border-radius: 10px;
+  cursor       : pointer;
+  transition   : background 0.2s, border-color 0.2s;
+}
+
+.settings-toggle-track::before {
+  content      : '';
+  position     : absolute;
+  top          : 3px;
+  left         : 3px;
+  width        : 12px;
+  height       : 12px;
+  border-radius: 50%;
+  background   : var(--dash-text-faint);
+  transition   : transform 0.2s, background 0.2s;
+}
+
+.settings-toggle input:checked + .settings-toggle-track {
+  background  : rgba(0, 212, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.4);
+}
+
+.settings-toggle input:checked + .settings-toggle-track::before {
+  transform : translateX(18px);
+  background: var(--dash-accent);
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.45);
+}
+
+/* ── Change password form ──────────────────────────────────── */
+.settings-pw-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap    : 12px;
+}
+
+@media (max-width: 500px) {
+  .settings-pw-row { grid-template-columns: 1fr; }
+}
+
+.settings-msg {
+  font-size  : 11px;
+  padding    : 9px 12px;
+  border-radius: 5px;
+  border     : 1px solid;
+  display    : none;
+}
+
+.settings-msg.visible { display: block; }
+
+.settings-msg--success {
+  color       : var(--dash-green);
+  border-color: rgba(68, 221, 136, 0.3);
+  background  : rgba(68, 221, 136, 0.06);
+}
+
+.settings-msg--error {
+  color       : var(--dash-red);
+  border-color: rgba(255, 77, 106, 0.3);
+  background  : rgba(255, 77, 106, 0.06);
+}
+
+/* ── Appearance ─────────────────────────────────────────────────── */
+.appearance-accent-row {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+  flex-wrap  : wrap;
+}
+
+.appearance-swatch {
+  width        : 22px;
+  height       : 22px;
+  border-radius: 50%;
+  background   : var(--swatch-col, #00d4ff);
+  border       : 2px solid transparent;
+  cursor       : pointer;
+  transition   : transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  outline      : none;
+  flex-shrink  : 0;
+}
+.appearance-swatch:hover { transform: scale(1.2); box-shadow: 0 0 8px var(--swatch-col, #00d4ff); }
+.appearance-swatch.active { border-color: #fff; box-shadow: 0 0 10px var(--swatch-col, #00d4ff); }
+
+/* ── Account info (read-only) ─────────────────────────────────── */
+.settings-info-row {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  padding        : 11px 0;
+  border-bottom  : 1px solid var(--dash-border2);
+  gap            : 12px;
+}
+.settings-info-row:last-child { border-bottom: none; }
+.settings-info-key {
+  font-size     : 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color         : var(--dash-text-faint);
+  min-width     : 100px;
+  flex-shrink   : 0;
+}
+.settings-info-val {
+  font-size : 11.5px;
+  color     : var(--dash-text);
+  word-break: break-all;
+  text-align: right;
+}
+
+/* ── Sidebar style toggle ────────────────────────────────────── */
+.sidebar-style-btns {
+  display: flex;
+  gap    : 6px;
+}
+
+.sidebar-style-btn {
+  background    : var(--dash-surface3);
+  border        : 1px solid var(--dash-border);
+  border-radius : 5px;
+  color         : var(--dash-text-dim);
+  cursor        : pointer;
+  font-family   : var(--font-mono);
+  font-size     : 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding       : 6px 14px;
+  transition    : background 0.18s, border-color 0.18s, color 0.18s;
+}
+.sidebar-style-btn:hover { border-color: rgba(0,212,255,0.3); color: var(--dash-text); }
+.sidebar-style-btn.active {
+  background  : rgba(0,212,255,0.1);
+  border-color: rgba(0,212,255,0.4);
+  color       : var(--dash-accent);
+}
+
+/* ── Developer Console role badge ──────────────────────────── */
+.admin-role-badge {
+  margin-left   : auto;
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  letter-spacing: 0.18em;
+  padding       : 2px 7px;
+  border-radius : 3px;
+  border        : 1px solid rgba(0, 212, 255, 0.2);
+  color         : var(--dash-accent);
+  background    : rgba(0, 212, 255, 0.05);
+}
+.admin-role-badge[data-role="owner"] {
+  border-color: rgba(245, 166, 35, 0.4);
+  color       : #f5a623;
+  background  : rgba(245, 166, 35, 0.07);
+}
+.admin-role-badge[data-role="admin"] {
+  border-color: rgba(168, 85, 247, 0.4);
+  color       : #a855f7;
+  background  : rgba(168, 85, 247, 0.07);
+}
+.admin-role-badge[data-role="mod"] {
+  border-color: rgba(68, 221, 136, 0.4);
+  color       : #44dd88;
+  background  : rgba(68, 221, 136, 0.07);
+}

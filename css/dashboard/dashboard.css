@@ -1,0 +1,693 @@
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD — Layout, Sidebar, Topbar, Shared Utilities
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  --dash-sidebar-w : 220px;
+  --dash-topbar-h  : 56px;
+  --dash-bg        : #07080c;
+  --dash-surface   : #0c0d14;
+  --dash-surface2  : #0f1018;
+  --dash-surface3  : #131520;
+  /* Accent — override with data-accent themes below */
+  --accent-rgb     : 0, 212, 255;
+  --dash-accent    : #00d4ff;
+  --dash-accent-dim: rgba(0, 212, 255, 0.5);
+  --dash-border    : rgba(0, 212, 255, 0.1);
+  --dash-border2   : rgba(0, 212, 255, 0.06);
+  --dash-text      : #c8cde0;
+  --dash-text-dim  : #7a8090;
+  --dash-text-faint: #3a4254;
+  --dash-red       : #ff4d6a;
+  --dash-green     : #44dd88;
+  --font-mono      : 'Courier New', Courier, monospace;
+}
+
+/* ── Accent color themes ──────────────────────────────────── */
+[data-accent="purple"] {
+  --accent-rgb     : 168, 85, 247;
+  --dash-accent    : #a855f7;
+  --dash-accent-dim: rgba(168, 85, 247, 0.5);
+  --dash-border    : rgba(168, 85, 247, 0.1);
+  --dash-border2   : rgba(168, 85, 247, 0.06);
+}
+[data-accent="green"] {
+  --accent-rgb     : 68, 221, 136;
+  --dash-accent    : #44dd88;
+  --dash-accent-dim: rgba(68, 221, 136, 0.5);
+  --dash-border    : rgba(68, 221, 136, 0.1);
+  --dash-border2   : rgba(68, 221, 136, 0.06);
+}
+[data-accent="gold"] {
+  --accent-rgb     : 245, 166, 35;
+  --dash-accent    : #f5a623;
+  --dash-accent-dim: rgba(245, 166, 35, 0.5);
+  --dash-border    : rgba(245, 166, 35, 0.1);
+  --dash-border2   : rgba(245, 166, 35, 0.06);
+}
+
+/* ── Screen wrapper ────────────────────────────────────────── */
+#dashboard-screen {
+  position  : fixed;
+  inset     : 0;
+  display   : flex;
+  background: var(--dash-bg);
+  color     : var(--dash-text);
+  font-family: var(--font-mono);
+  z-index   : 10;
+
+  opacity         : 0;
+  pointer-events  : none;
+  transition      : opacity 0.45s ease;
+}
+
+#dashboard-screen.dash-visible {
+  opacity       : 1;
+  pointer-events: all;
+}
+
+/* CRT grid + scanline background */
+#dashboard-screen::before {
+  content : '';
+  position: fixed;
+  inset   : 0;
+  background-image:
+    linear-gradient(rgba(var(--accent-rgb), 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.018) 1px, transparent 1px);
+  background-size: 42px 42px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#dashboard-screen::after {
+  content : '';
+  position: fixed;
+  inset   : 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.04) 3px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Sidebar collapse toggle button ────────────────────────── */
+.dash-sidebar-collapse-btn {
+  background    : none;
+  border        : 1px solid rgba(0,212,255,0.14);
+  border-radius : 5px;
+  color         : var(--dash-text-faint);
+  cursor        : pointer;
+  display       : flex;
+  align-items   : center;
+  justify-content: center;
+  width         : 24px;
+  height        : 24px;
+  flex-shrink   : 0;
+  margin-left   : auto;
+  padding       : 0;
+  transition    : color 0.18s, border-color 0.18s, background 0.18s;
+}
+.dash-sidebar-collapse-btn:hover {
+  color         : var(--dash-accent);
+  border-color  : rgba(0,212,255,0.4);
+  background    : rgba(0,212,255,0.06);
+}
+.dash-sidebar-collapse-btn svg {
+  width      : 14px;
+  height     : 14px;
+  stroke     : currentColor;
+  fill       : none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition : transform 0.32s ease;
+}
+
+/* When sidebar is manually collapsed */
+#dashboard-screen.sidebar-collapsed .dash-sidebar {
+  width: 56px;
+}
+#dashboard-screen.sidebar-collapsed .dash-sidebar-brand-text {
+  opacity  : 0;
+  max-width: 0;
+  margin   : 0;
+}
+#dashboard-screen.sidebar-collapsed .dash-sidebar-collapse-btn svg {
+  transform: rotate(180deg);
+}
+#dashboard-screen.sidebar-collapsed .dash-nav-item {
+  justify-content: center;
+  padding        : 10px 0;
+  gap            : 0;
+}
+#dashboard-screen.sidebar-collapsed .nav-label {
+  opacity  : 0;
+  max-width: 0;
+}
+#dashboard-screen.sidebar-collapsed .dash-sidebar-brand {
+  justify-content: center;
+  padding        : 20px 0 18px;
+  gap            : 0;
+}
+
+/* Don’t double-collapse in compact mode */
+#dashboard-screen.viewport-md .dash-sidebar-collapse-btn { display: none; }
+#dashboard-screen.viewport-sm .dash-sidebar-collapse-btn { display: none; }
+
+/* ── Sidebar ────────────────────────────────────────────────────────── */
+.dash-sidebar {
+  width      : var(--dash-sidebar-w);
+  height     : 100%;
+  flex-shrink: 0;
+  background : var(--dash-surface);
+  border-right: 1px solid var(--dash-border);
+  display    : flex;
+  flex-direction: column;
+  overflow   : hidden;
+  position   : relative;
+  z-index    : 1;
+  transition : width 0.28s ease;
+}
+
+/* Brand — must match topbar height exactly so bottom borders align */
+.dash-sidebar-brand {
+  display    : flex;
+  align-items: center;
+  gap        : 10px;
+  height     : var(--dash-topbar-h);
+  padding    : 0 14px;
+  box-sizing : border-box;
+  border-bottom: 1px solid var(--dash-border);
+  flex-shrink: 0;
+}
+
+.dash-sidebar-brand-img {
+  width      : 26px;
+  height     : 26px;
+  object-fit : contain;
+  opacity    : 0.82;
+  cursor     : pointer;
+  flex-shrink: 0;
+  transition : opacity 0.18s, transform 0.22s cubic-bezier(0.34,1.56,0.64,1), filter 0.22s;
+}
+.dash-sidebar-brand-img:hover {
+  opacity: 1;
+  transform: scale(1.13);
+  filter: drop-shadow(0 0 7px rgba(0, 212, 255, 0.55));
+}
+.dash-sidebar-brand-img:active {
+  transform: scale(0.94);
+}
+
+.dash-sidebar-brand-text {
+  font-size     : 12px;
+  font-weight   : 700;
+  letter-spacing: 0.15em;
+  color         : var(--dash-accent);
+  text-shadow   : 0 0 12px rgba(0, 212, 255, 0.4);
+}
+
+/* Nav list */
+.dash-nav {
+  list-style: none;
+  padding   : 10px 8px;
+  margin    : 0;
+  flex      : 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display   : flex;
+  flex-direction: column;
+  gap       : 2px;
+}
+.dash-nav::-webkit-scrollbar { display: none; }
+
+.dash-nav-item {
+  display    : flex;
+  align-items: center;
+  gap        : 11px;
+  padding    : 10px 12px;
+  border-radius: 6px;
+  cursor     : pointer;
+  color      : var(--dash-text-dim);
+  font-size  : 11px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  border     : 1px solid transparent;
+  background : none;
+  width      : 100%;
+  text-align : left;
+  font-family: var(--font-mono);
+  transition : color 0.18s, background 0.18s, border-color 0.18s;
+  user-select: none;
+}
+
+.dash-nav-item svg {
+  width     : 15px;
+  height    : 15px;
+  flex-shrink: 0;
+  stroke    : currentColor;
+  fill      : none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: filter 0.18s;
+}
+
+.dash-nav-item:hover {
+  color       : var(--dash-text);
+  background  : rgba(var(--accent-rgb), 0.05);
+  border-color: rgba(var(--accent-rgb), 0.12);
+}
+
+.dash-nav-item.active {
+  color       : var(--dash-accent);
+  background  : rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.22);
+  text-shadow : 0 0 10px rgba(var(--accent-rgb), 0.25);
+}
+
+.dash-nav-item.active svg {
+  filter: drop-shadow(0 0 4px rgba(var(--accent-rgb), 0.55));
+}
+
+.dash-nav-separator {
+  height    : 1px;
+  background: var(--dash-border);
+  margin    : 8px 4px;
+  list-style: none;
+}
+
+/* Sidebar footer (logout) — always pinned to the very bottom */
+.dash-sidebar-footer {
+  margin-top: auto;
+  padding   : 10px 8px;
+  border-top: 1px solid var(--dash-border);
+  flex-shrink: 0;
+}
+
+.dash-nav-item--logout {
+  color: rgba(255, 77, 106, 0.65);
+}
+
+.dash-nav-item--logout:hover {
+  color       : var(--dash-red);
+  background  : rgba(255, 77, 106, 0.07);
+  border-color: rgba(255, 77, 106, 0.2);
+}
+
+/* ── Main area ─────────────────────────────────────────────── */
+.dash-main {
+  flex     : 1;
+  display  : flex;
+  flex-direction: column;
+  overflow : hidden;
+  min-width: 0;
+  position : relative;
+  z-index  : 1;
+}
+
+/* ── Topbar ────────────────────────────────────────────────── */
+.dash-topbar {
+  height      : var(--dash-topbar-h);
+  flex-shrink : 0;
+  background  : var(--dash-surface);
+  border-bottom: 1px solid var(--dash-border);
+  display     : flex;
+  align-items : center;
+  justify-content: space-between;
+  padding     : 0 28px;
+  gap         : 16px;
+}
+
+.dash-topbar-left {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+}
+
+.dash-breadcrumb-root {
+  font-size     : 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color         : var(--dash-text-faint);
+}
+
+.dash-breadcrumb-sep {
+  color  : var(--dash-accent);
+  opacity: 0.35;
+  font-size: 12px;
+}
+
+.dash-breadcrumb-current {
+  font-size     : 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color         : var(--dash-text);
+}
+
+.dash-topbar-right {
+  display    : flex;
+  align-items: center;
+  gap        : 16px;
+}
+
+.dash-user-badge {
+  display    : flex;
+  align-items: center;
+  gap        : 8px;
+  font-size  : 11px;
+  color      : var(--dash-text-dim);
+  letter-spacing: 0.06em;
+}
+
+.dash-user-badge-label {
+  color: var(--dash-text-faint);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dash-user-badge-name {
+  color: var(--dash-accent);
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+}
+
+/* Online indicator */
+.dash-status-dot {
+  width       : 6px;
+  height      : 6px;
+  border-radius: 50%;
+  background  : var(--dash-green);
+  box-shadow  : 0 0 6px rgba(68, 221, 136, 0.6);
+  flex-shrink : 0;
+}
+
+/* ── Scrollable content ────────────────────────────────────── */
+.dash-content {
+  flex      : 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding   : 32px 32px 56px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.18) transparent;
+}
+
+.dash-content::-webkit-scrollbar        { width: 3px; }
+.dash-content::-webkit-scrollbar-track  { background: transparent; }
+.dash-content::-webkit-scrollbar-thumb  { background: rgba(var(--accent-rgb), 0.2); border-radius: 2px; }
+
+/* Messages section — takes over full content area (no padding) */
+.dash-content.section-messages-active {
+  padding : 0;
+  overflow: hidden;
+}
+#section-messages.active {
+  display       : flex;
+  flex-direction: column;
+  height        : 100%;
+}
+#section-messages.active .section-head {
+  padding      : 18px 24px 0;
+  margin-bottom: 12px;
+  flex-shrink  : 0;
+}
+.section-messages-active .messages-layout {
+  flex      : 1;
+  min-height: 0;
+  height    : auto;
+}
+
+/* Inactivity logout overlay */
+.inactivity-overlay {
+  position       : fixed;
+  inset          : 0;
+  background     : rgba(7, 8, 12, 0.88);
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  justify-content: center;
+  gap            : 14px;
+  z-index        : 9999;
+  font-family    : var(--font-mono);
+  color          : var(--dash-text-faint);
+  font-size      : 12px;
+  letter-spacing : 0.1em;
+  text-align     : center;
+  backdrop-filter: blur(4px);
+}
+.inactivity-overlay-title {
+  font-size     : 15px;
+  color         : var(--dash-text);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.inactivity-overlay-countdown {
+  font-size  : 28px;
+  color      : var(--dash-accent);
+  font-weight: 700;
+  text-shadow: 0 0 24px rgba(var(--accent-rgb), 0.5);
+}
+
+.inactivity-box {
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+  gap           : 16px;
+  background    : var(--dash-surface2);
+  border        : 1px solid var(--dash-border);
+  border-radius : 12px;
+  padding       : 32px 40px;
+  max-width     : 380px;
+  box-shadow    : 0 0 60px rgba(0,0,0,0.6);
+}
+
+/* ── Content-area responsive classes (set by responsive.js) ─── */
+/* Two-column layouts collapse on smaller content areas */
+.content-sm .profile-layout,
+.content-sm .friends-layout,
+.content-sm .settings-layout {
+  grid-template-columns: 1fr !important;
+}
+
+.content-md .profile-layout {
+  grid-template-columns: 220px 1fr;
+}
+
+.content-sm .section-head-title {
+  font-size: 15px;
+}
+
+/* Messages back button (shown in mobile single-pane mode) */
+.msg-back-btn {
+  display        : none;
+  background     : none;
+  border         : none;
+  color          : var(--dash-accent);
+  cursor         : pointer;
+  padding        : 4px 6px;
+  margin-right   : 6px;
+  border-radius  : 4px;
+  flex-shrink    : 0;
+}
+
+.viewport-sm .msg-back-btn,
+.content-sm .msg-back-btn {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Sections ──────────────────────────────────────────────── */
+.dash-section {
+  display: none;
+}
+
+.dash-section.active {
+  display  : block;
+  animation: dashSectionIn 0.28s ease both;
+}
+
+@keyframes dashSectionIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Section heading ───────────────────────────────────────── */
+.section-head {
+  margin-bottom: 26px;
+}
+
+.section-head-row {
+  display    : flex;
+  align-items: baseline;
+  gap        : 8px;
+}
+
+.section-head-prefix {
+  font-size  : 12px;
+  color      : var(--dash-accent);
+  opacity    : 0.55;
+}
+
+.section-head-title {
+  font-size     : 19px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color         : #e4e8f4;
+}
+
+.section-head-sub {
+  font-size  : 11px;
+  color      : var(--dash-text-faint);
+  letter-spacing: 0.06em;
+  margin-top : 6px;
+  line-height: 1.6;
+}
+
+/* ── Shared card ───────────────────────────────────────────── */
+.dash-card {
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 8px;
+  padding      : 22px 24px;
+}
+
+.dash-card--hover {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dash-card--hover:hover {
+  border-color: rgba(0, 212, 255, 0.25);
+  box-shadow  : 0 0 20px rgba(0, 212, 255, 0.05);
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+  justify-content: center;
+  gap           : 12px;
+  padding       : 72px 24px;
+  color         : var(--dash-text-faint);
+  text-align    : center;
+}
+
+.empty-state svg {
+  width  : 38px;
+  height : 38px;
+  stroke : var(--dash-text-faint);
+  opacity: 0.35;
+}
+
+.empty-state-title {
+  font-size     : 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.empty-state-sub {
+  font-size  : 11px;
+  max-width  : 260px;
+  line-height: 1.75;
+  opacity    : 0.55;
+}
+
+/* ── Shared table-style row list ───────────────────────────── */
+.row-list {
+  display       : flex;
+  flex-direction: column;
+  gap           : 2px;
+}
+
+.row-list-item {
+  display    : flex;
+  align-items: center;
+  gap        : 12px;
+  padding    : 12px 14px;
+  border-radius : 6px;
+  border     : 1px solid transparent;
+  transition : background 0.18s, border-color 0.18s;
+}
+
+.row-list-item:hover {
+  background  : rgba(0, 212, 255, 0.04);
+  border-color: rgba(0, 212, 255, 0.08);
+}
+
+/* ── Shared field/label ────────────────────────────────────── */
+.dash-field-label {
+  font-size     : 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color         : var(--dash-accent);
+  opacity       : 0.7;
+  margin-bottom : 6px;
+  display       : block;
+}
+
+.dash-input {
+  width        : 100%;
+  background   : var(--dash-surface);
+  border       : 1px solid var(--dash-border);
+  border-radius: 5px;
+  color        : var(--dash-text);
+  font-family  : var(--font-mono);
+  font-size    : 12px;
+  padding      : 9px 12px;
+  outline      : none;
+  transition   : border-color 0.18s, box-shadow 0.18s;
+  box-sizing   : border-box;
+}
+
+.dash-input:focus {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  box-shadow  : 0 0 0 2px rgba(var(--accent-rgb), 0.08);
+}
+
+/* ── Shared button ─────────────────────────────────────────── */
+.dash-btn {
+  display      : inline-flex;
+  align-items  : center;
+  gap          : 8px;
+  font-family  : var(--font-mono);
+  font-size    : 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 5px;
+  padding      : 9px 18px;
+  cursor       : pointer;
+  transition   : all 0.18s;
+  border       : 1px solid;
+}
+
+.dash-btn--primary {
+  background  : rgba(var(--accent-rgb), 0.1);
+  border-color: rgba(var(--accent-rgb), 0.35);
+  color       : var(--dash-accent);
+}
+
+.dash-btn--primary:hover {
+  background  : rgba(var(--accent-rgb), 0.18);
+  border-color: rgba(var(--accent-rgb), 0.6);
+  box-shadow  : 0 0 14px rgba(var(--accent-rgb), 0.15);
+}
+
+.dash-btn--danger {
+  background  : rgba(255, 77, 106, 0.08);
+  border-color: rgba(255, 77, 106, 0.3);
+  color       : var(--dash-red);
+}
+
+.dash-btn--danger:hover {
+  background  : rgba(255, 77, 106, 0.15);
+  border-color: rgba(255, 77, 106, 0.55);
+}
+
+.dash-btn:disabled {
+  opacity: 0.4;
+  cursor : not-allowed;
+}

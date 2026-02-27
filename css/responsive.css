@@ -1,0 +1,216 @@
+/* ════════════════════════════════════════════════════════════
+   RESPONSIVE.CSS  —  Real-time adaptive layout engine
+   viewport-md (600–899px) and viewport-sm (<600px) classes
+   are toggled by js/responsive.js via ResizeObserver so CSS
+   transitions fire live as you drag the window edge.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Smooth transitions on layout-critical elements ─────────── */
+/* These must live here (not in dashboard.css) so they're only
+   active when this stylesheet loads — keeps baseline layout fast. */
+
+.dash-sidebar {
+  transition:
+    width        0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.28s ease;
+}
+
+.dash-sidebar-brand-text,
+.nav-label {
+  overflow   : hidden;
+  white-space: nowrap;
+  transition : opacity 0.2s ease, max-width 0.28s ease;
+  max-width  : 140px;   /* wide enough to always show full label */
+}
+
+.dash-content {
+  transition: padding 0.28s ease;
+}
+
+/* Brief border flash + inner glow when sidebar mode snaps */
+.dash-sidebar.sidebar-snap {
+  border-right-color: rgba(0, 212, 255, 0.4) !important;
+  box-shadow: inset -3px 0 20px rgba(0, 212, 255, 0.07);
+}
+
+/* ════════════════════════════════════════════════════════════
+   LOADING SCREEN
+   ════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .loading-content { gap: 16px; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   AUTH SCREEN  —  fine-tune below 768px
+   (login.css already hides ls-left at ≤768px)
+   ════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .ls-right      { padding: 12px; }
+  .terminal-body { padding: 18px 18px 24px; }
+}
+
+@media (max-width: 360px) {
+  .terminal-bar     { padding: 8px 12px; }
+  .terminal-body    { padding: 14px 14px 20px; }
+  .terminal-heading { font-size: 0.85rem; }
+  .terminal-sub     { display: none; }
+  .form-row-options { flex-direction: column; align-items: flex-start; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD  —  Compact sidebar   (viewport-md: 600–899px)
+   ════════════════════════════════════════════════════════════ */
+
+/* Sidebar collapses to icon-only strip */
+#dashboard-screen.viewport-md .dash-sidebar {
+  width: 56px;
+}
+
+/* Brand: hide text label, centre logo */
+#dashboard-screen.viewport-md .dash-sidebar-brand {
+  justify-content: center;
+  padding        : 20px 0 18px;
+  gap            : 0;
+}
+#dashboard-screen.viewport-md .dash-sidebar-brand-text {
+  opacity  : 0;
+  max-width: 0;
+  margin   : 0;
+}
+
+/* Nav items: icon centred, label invisible */
+#dashboard-screen.viewport-md .dash-nav-item {
+  justify-content: center;
+  padding        : 10px 0;
+  gap            : 0;
+}
+#dashboard-screen.viewport-md .nav-label {
+  opacity  : 0;
+  max-width: 0;
+}
+#dashboard-screen.viewport-md .dash-nav-separator {
+  margin: 6px 10px;
+}
+
+/* Tighten layout */
+#dashboard-screen.viewport-md .dash-content {
+  padding: 22px 20px 40px;
+}
+#dashboard-screen.viewport-md .dash-topbar {
+  padding: 0 20px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD  —  Mobile bottom nav   (viewport-sm: <600px)
+   ════════════════════════════════════════════════════════════ */
+
+/* Stack children: main on top, sidebar becomes bottom bar */
+#dashboard-screen.viewport-sm {
+  flex-direction: column;
+}
+#dashboard-screen.viewport-sm .dash-main {
+  order    : 1;
+  min-height: 0;
+  flex     : 1;
+}
+
+/* Sidebar → bottom navigation bar */
+#dashboard-screen.viewport-sm .dash-sidebar {
+  order         : 2;
+  width         : 100%;
+  height        : 58px;
+  flex-direction: row;
+  flex-shrink   : 0;
+  border-right  : none;
+  border-top    : 1px solid var(--dash-border);
+  transition    : none;
+}
+#dashboard-screen.viewport-sm .dash-sidebar-brand,
+#dashboard-screen.viewport-sm .dash-sidebar-footer {
+  display: none;
+}
+
+/* Horizontal nav list */
+#dashboard-screen.viewport-sm .dash-nav {
+  flex-direction : row;
+  align-items    : stretch;
+  justify-content: space-around;
+  padding        : 0;
+  gap            : 0;
+  flex           : 1;
+}
+/* Separator → vertical divider */
+#dashboard-screen.viewport-sm .dash-nav-separator {
+  width     : 1px;
+  height    : auto;
+  background: var(--dash-border);
+  margin    : 10px 0;
+  align-self: stretch;
+}
+
+/* Each tab item */
+#dashboard-screen.viewport-sm .dash-nav-item {
+  flex           : 1;
+  flex-direction : column;
+  align-items    : center;
+  justify-content: center;
+  gap            : 4px;
+  padding        : 5px 4px;
+  border-radius  : 0;
+  border         : none;
+  border-top     : 2px solid transparent;
+  background     : transparent !important;
+  box-shadow     : none !important;
+  text-shadow    : none;
+  transition     : color 0.18s, border-color 0.18s;
+}
+#dashboard-screen.viewport-sm .dash-nav-item.active {
+  border-top: 2px solid var(--dash-accent);
+  color     : var(--dash-accent);
+}
+#dashboard-screen.viewport-sm .dash-nav-item svg {
+  width : 17px;
+  height: 17px;
+}
+
+/* Tiny label below icon on mobile */
+#dashboard-screen.viewport-sm .nav-label {
+  opacity       : 1;
+  max-width     : 60px;
+  font-size     : 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow      : hidden;
+  white-space   : nowrap;
+}
+
+/* Compact topbar */
+#dashboard-screen.viewport-sm .dash-topbar {
+  padding: 0 14px;
+  gap    : 8px;
+}
+#dashboard-screen.viewport-sm .dash-breadcrumb-root,
+#dashboard-screen.viewport-sm .dash-breadcrumb-sep {
+  display: none;
+}
+#dashboard-screen.viewport-sm .dash-user-badge-label {
+  display: none;
+}
+
+/* Tighter content */
+#dashboard-screen.viewport-sm .dash-content {
+  padding: 16px 14px 20px;
+}
+#dashboard-screen.viewport-sm .section-head {
+  margin-bottom: 16px;
+}
+#dashboard-screen.viewport-sm .section-head-title {
+  font-size: 15px;
+}
+
+/* Settings full-width on mobile */
+#dashboard-screen.viewport-sm .settings-layout {
+  max-width: 100%;
+}

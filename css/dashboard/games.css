@@ -1,0 +1,250 @@
+/* ════════════════════════════════════════════════════════════
+   GAMES LIBRARY SECTION
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Filter bar ────────────────────────────────────────────── */
+.games-filter-bar {
+  display    : flex;
+  align-items: center;
+  gap        : 10px;
+  margin-bottom: 24px;
+  flex-wrap  : wrap;
+}
+
+.games-search-wrap {
+  position: relative;
+  flex    : 1;
+  min-width: 180px;
+}
+
+.games-search-wrap svg {
+  position: absolute;
+  left    : 11px;
+  top     : 50%;
+  transform: translateY(-50%);
+  width   : 13px;
+  height  : 13px;
+  stroke  : var(--dash-text-faint);
+  fill    : none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.games-search {
+  width       : 100%;
+  background  : var(--dash-surface2);
+  border      : 1px solid var(--dash-border);
+  border-radius: 6px;
+  color       : var(--dash-text);
+  font-family : var(--font-mono);
+  font-size   : 11.5px;
+  padding     : 9px 12px 9px 34px;
+  outline     : none;
+  transition  : border-color 0.18s;
+  box-sizing  : border-box;
+}
+
+.games-search::placeholder { color: var(--dash-text-faint); }
+
+.games-search:focus {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow  : 0 0 0 2px rgba(0, 212, 255, 0.06);
+}
+
+/* ── Content info bar ──────────────────────────────────────── */
+.games-count {
+  font-size     : 10px;
+  letter-spacing: 0.1em;
+  color         : var(--dash-text-faint);
+  text-transform: uppercase;
+  margin-bottom : 18px;
+}
+
+.games-count span {
+  color: var(--dash-accent);
+}
+
+/* ── Game grid ─────────────────────────────────────────────── */
+.games-grid {
+  display              : grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap                  : 16px;
+}
+
+/* ── Game card ─────────────────────────────────────────────── */
+.game-card {
+  position     : relative;
+  background   : var(--dash-surface2);
+  border       : 1px solid var(--dash-border);
+  border-radius: 10px;
+  overflow     : hidden;
+  cursor       : pointer;
+  transition   : transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display      : flex;
+  flex-direction: column;
+}
+
+.game-card:hover {
+  transform   : translateY(-3px);
+  border-color: rgba(0, 212, 255, 0.35);
+  box-shadow  : 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 16px rgba(0, 212, 255, 0.06);
+}
+
+.game-card:active {
+  transform: translateY(-1px);
+}
+
+/* Thumbnail / banner area */
+.game-card-thumb {
+  width          : 100%;
+  aspect-ratio   : 16 / 9;
+  background     : var(--dash-surface3);
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  position       : relative;
+  overflow       : hidden;
+}
+
+.game-card-thumb img {
+  width     : 100%;
+  height    : 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.game-card:hover .game-card-thumb img {
+  transform: scale(1.04);
+}
+
+/* Placeholder icon when no image */
+.game-card-thumb-icon {
+  width  : 36px;
+  height : 36px;
+  stroke : rgba(0, 212, 255, 0.2);
+  fill   : none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Play overlay */
+.game-card-overlay {
+  position  : absolute;
+  inset     : 0;
+  background: rgba(0, 0, 0, 0.55);
+  display   : flex;
+  align-items: center;
+  justify-content: center;
+  opacity   : 0;
+  transition: opacity 0.2s;
+}
+
+.game-card:hover .game-card-overlay {
+  opacity: 1;
+}
+
+.game-card-play {
+  width        : 42px;
+  height       : 42px;
+  border-radius: 50%;
+  border       : 2px solid var(--dash-accent);
+  display      : flex;
+  align-items  : center;
+  justify-content: center;
+  box-shadow   : 0 0 16px rgba(0, 212, 255, 0.4);
+}
+
+.game-card-play svg {
+  width  : 16px;
+  height : 16px;
+  fill   : var(--dash-accent);
+  stroke : none;
+  margin-left: 2px;
+}
+
+/* Status badge */
+.game-card-badge {
+  position     : absolute;
+  top          : 8px;
+  right        : 8px;
+  font-size    : 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding      : 3px 7px;
+  border-radius: 3px;
+  background   : rgba(0, 0, 0, 0.7);
+  border       : 1px solid;
+  backdrop-filter: blur(4px);
+}
+
+.game-card-badge--new {
+  color       : var(--dash-green);
+  border-color: rgba(68, 221, 136, 0.35);
+}
+
+.game-card-badge--hot {
+  color       : #ffa040;
+  border-color: rgba(255, 160, 64, 0.35);
+}
+
+/* Card body */
+.game-card-body {
+  padding: 14px 16px 16px;
+  flex   : 1;
+  display: flex;
+  flex-direction: column;
+  gap    : 6px;
+}
+
+.game-card-title {
+  font-size     : 12.5px;
+  letter-spacing: 0.06em;
+  color         : #e4e8f4;
+  text-transform: uppercase;
+  white-space   : nowrap;
+  overflow      : hidden;
+  text-overflow : ellipsis;
+}
+
+.game-card-desc {
+  font-size  : 10.5px;
+  color      : var(--dash-text-faint);
+  line-height: 1.6;
+  flex       : 1;
+  display    : -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow   : hidden;
+}
+
+.game-card-meta {
+  display    : flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top : 4px;
+}
+
+.game-card-tag {
+  font-size     : 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color         : var(--dash-accent);
+  opacity       : 0.65;
+}
+
+.game-card-plays {
+  font-size: 10px;
+  color    : var(--dash-text-faint);
+  letter-spacing: 0.05em;
+}
+
+.game-card-playtime {
+  font-size     : 9.5px;
+  letter-spacing: 0.06em;
+  color         : var(--dash-text-faint);
+  opacity       : 0.7;
+  font-family   : var(--font-mono);
+}

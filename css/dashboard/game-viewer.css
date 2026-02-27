@@ -1,0 +1,150 @@
+/* ════════════════════════════════════════════════════
+   IN-APP GAME VIEWER
+   Full-screen overlay that embeds a game in an iframe
+   so users never leave the dashboard.
+════════════════════════════════════════════════════ */
+
+/* ── Overlay shell ───────────────────────────────── */
+.game-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  background: #05060f;
+  animation: gvFadeIn 0.22s ease both;
+}
+
+.game-viewer[hidden] { display: none; }
+
+@keyframes gvFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Top bar ─────────────────────────────────────── */
+.game-viewer-bar {
+  flex-shrink: 0;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  background: rgba(8, 10, 24, 0.96);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Back button */
+.game-viewer-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 212, 255, 0.07);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+  color: var(--color-accent-cyan, #00d4ff);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 5px 12px 5px 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.game-viewer-back:hover {
+  background: rgba(0, 212, 255, 0.14);
+  border-color: rgba(0, 212, 255, 0.45);
+}
+
+.game-viewer-back svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* Breadcrumb */
+.game-viewer-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  color: rgba(0, 212, 255, 0.35);
+  letter-spacing: 0.12em;
+  user-select: none;
+}
+
+.game-viewer-breadcrumb-sep {
+  opacity: 0.4;
+}
+
+/* Title */
+.game-viewer-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(0, 212, 255, 0.9);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Spacer pushes right-side buttons to the edge */
+.game-viewer-spacer {
+  flex: 1;
+}
+
+/* Right-side action buttons */
+.game-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-viewer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 6px;
+  color: rgba(0, 212, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.game-viewer-btn:hover {
+  background: rgba(0, 212, 255, 0.09);
+  border-color: rgba(0, 212, 255, 0.35);
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+.game-viewer-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Iframe ──────────────────────────────────────── */
+.game-viewer-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  display: block;
+  background: #000;
+}

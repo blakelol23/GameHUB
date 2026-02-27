@@ -1,0 +1,64 @@
+/* css/dashboard/context-menu.css
+   Custom right-click context menu
+   ─────────────────────────────────────────────────────────── */
+
+.ctx-menu {
+  position: fixed;
+  z-index: 9500;
+  min-width: 170px;
+  background: #1c2035;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  padding: .35rem;
+  transform-origin: var(--ctx-origin, top left);
+  transform: scale(.88);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .16s cubic-bezier(.22,1,.36,1), opacity .16s ease;
+}
+.ctx-menu--in {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Individual item */
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .42rem .7rem;
+  border-radius: 6px;
+  font-size: .78rem;
+  color: #c8d0e0;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s, color .12s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.ctx-item:hover {
+  background: rgba(255,255,255,.07);
+  color: #e8ecf8;
+}
+.ctx-item__icon {
+  font-size: .9rem;
+  line-height: 1;
+  width: 1.1em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Danger variant (delete, remove friend, report) */
+.ctx-item--danger       { color: #ff4d6a; }
+.ctx-item--danger:hover { background: rgba(255,77,106,.12); color: #ff4d6a; }
+
+/* Separator */
+.ctx-sep {
+  height: 1px;
+  background: rgba(255,255,255,.07);
+  margin: .3rem 0;
+}
