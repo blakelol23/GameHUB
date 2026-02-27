@@ -314,6 +314,19 @@ async function handleLogin(e) {
     return;
   }
 
+  // — Sentinel honeypot check ———————————————————————————————————————
+  if (window.snl?.honeypot()) {
+    window.dispatchEvent(new CustomEvent('snl:fail', { detail: { code: 'honeypot' } }));
+    setBtnLoading(true);
+    await new Promise(r => setTimeout(r, 1400));
+    showGlobalError('Invalid email or password.');
+    setBtnLoading(false);
+    return;
+  }
+
+  // — Sentinel timing probe —————————————————————————————————————————
+  window.snl?.timing();
+
   if (!validate()) return;
   setBtnLoading(true);
   try {

@@ -131,6 +131,27 @@ function validate() {
 async function handleRegister(e) {
   e.preventDefault();
   clrGlobalError();
+
+  // — Sentinel lockout check ————————————————————————————————————————
+  if (window.snl?.locked()) {
+    const mins = Math.ceil((window.snl.remain()) / 60000);
+    showGlobalError(`Too many failed attempts. Try again in ${mins} minute${mins > 1 ? 's' : ''}.`);
+    return;
+  }
+
+  // — Sentinel honeypot check ———————————————————————————————————————
+  if (window.snl?.honeypot()) {
+    window.dispatchEvent(new CustomEvent('snl:fail', { detail: { code: 'honeypot' } }));
+    setBtnLoading(true);
+    await new Promise(r => setTimeout(r, 1400));
+    showGlobalError('Something went wrong. Please try again.');
+    setBtnLoading(false);
+    return;
+  }
+
+  // — Sentinel timing probe —————————————————————————————————————————
+  window.snl?.timing();
+
   if (!validate()) return;
   setBtnLoading(true);
   try {
@@ -140,8 +161,10 @@ async function handleRegister(e) {
       password: passwordInput.value,
     });
     // dashboard.js's onAuthStateChanged handles the transition
+    window.dispatchEvent(new CustomEvent('snl:ok'));
   } catch (err) {
     setBtnLoading(false);
+    window.dispatchEvent(new CustomEvent('snl:fail', { detail: { code: err.code } }));
     if (err.message === 'username-taken') setErr(fieldUsername, errUsername, 'Username is already taken.');
     else showGlobalError(getFriendlyError(err.code));
   }
@@ -206,6 +229,24 @@ passwordInput.addEventListener('input', () => {
 confirmInput.addEventListener('input', () => {
   if (confirmInput.value !== passwordInput.value) setErr(fieldConfirm, errConfirm, 'Passwords do not match.');
   else clrErr(fieldConfirm, errConfirm);
+});
+
+// ── Sentinel lockout listener ────────────────────────────────────────────────
+window.addEventListener('snl:lockout', (e) => {
+  const mins = Math.ceil((e.detail?.remaining ?? 360000) / 60000);
+  showGlobalError(`Too many failed attempts. Try again in ${mins} minute${mins > 1 ? 's' : ''}.`);
+  if (btn) btn.disabled = true;
+  const interval = setInterval(() => {
+    const rem = window.snl?.remain() ?? 0;
+    if (rem <= 0) {
+      clearInterval(interval);
+      clrGlobalError();
+      if (btn) btn.disabled = false;
+    } else {
+      const m = Math.ceil(rem / 60000);
+      showGlobalError(`Too many failed attempts. Try again in ${m} minute${m > 1 ? 's' : ''}.`);
+    }
+  }, 15000);
 });
 
 form.addEventListener('submit',     handleRegister);

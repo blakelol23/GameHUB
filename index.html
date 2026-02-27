@@ -232,7 +232,7 @@
           <p class="terminal-heading">IDENTITY VERIFICATION</p>
           <p class="terminal-sub">Enter credentials to continue</p>
 
-          <form id="login-form" class="login-form" novalidate autocomplete="on">
+          <form id="login-form" class="login-form" method="post" action="." novalidate autocomplete="on">
 
             <div class="field-group" id="field-email">
               <label class="field-label" for="login-email">// Email</label>
@@ -249,7 +249,7 @@
               <label class="field-label" for="login-password">// Password</label>
               <div class="field-wrap">
                 <input
-                  type="password" id="login-password" name="password"
+                  type="password" id="login-password"
                   class="field-input" placeholder="••••••••"
                   autocomplete="current-password" maxlength="128" required />
                 <button type="button" class="toggle-password" id="toggle-password" aria-label="Show password">
@@ -319,7 +319,7 @@
           <p class="terminal-heading">CREATE ACCOUNT</p>
           <p class="terminal-sub">Set up your Game Hub identity</p>
 
-          <form id="register-form" class="login-form" novalidate autocomplete="off">
+          <form id="register-form" class="login-form" method="post" action="." novalidate autocomplete="off">
 
             <div class="field-group" id="reg-field-username">
               <label class="field-label" for="reg-username">// Username</label>
@@ -348,7 +348,7 @@
               <label class="field-label" for="reg-password">// Password</label>
               <div class="field-wrap">
                 <input
-                  type="password" id="reg-password" name="password"
+                  type="password" id="reg-password"
                   class="field-input" placeholder="min. 8 characters"
                   autocomplete="new-password" maxlength="128" required />
                 <button type="button" class="toggle-password" id="reg-toggle-password" aria-label="Show password">
@@ -373,7 +373,7 @@
               <label class="field-label" for="reg-confirm">// Confirm Password</label>
               <div class="field-wrap">
                 <input
-                  type="password" id="reg-confirm" name="confirm"
+                  type="password" id="reg-confirm"
                   class="field-input" placeholder="••••••••"
                   autocomplete="new-password" maxlength="128" required />
               </div>
