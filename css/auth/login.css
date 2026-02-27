@@ -606,18 +606,43 @@
     flex-direction: column;
   }
 
-  /* ── Hero strip: sphere canvas atmosphere only ──────────────────── */
+  /* ── Hero strip ─────────────────────────────────────────────────── */
   .ls-left {
     display        : flex;
-    flex           : 0 0 min(26vh, 170px);
+    flex           : 0 0 min(32vh, 200px);
     width          : 100%;
     align-items    : center;
     justify-content: center;
     overflow       : hidden;
   }
 
-  /* Hide logo / title / tagline — pure canvas atmosphere on mobile */
-  .ls-brand { display: none; }
+  /* Brand: centered compact layout inside the hero strip */
+  .ls-brand {
+    display    : flex;
+    position   : relative;
+    z-index    : 2;
+    padding    : 0 0 16px;
+    align-items: center;
+    text-align : center;
+    gap        : 6px;
+  }
+
+  .ls-brand-logo {
+    width : 36px;
+    height: 36px;
+    animation: none;
+  }
+
+  .ls-brand-title {
+    font-size: clamp(1.6rem, 7.5vw, 2.2rem);
+  }
+
+  .ls-brand-tagline {
+    max-width : none;
+    font-size : 0.65rem;
+    text-align: center;
+    opacity   : 0.50;
+  }
 
   /* Strong bottom vignette — bleeds into the form section seamlessly */
   .ls-left-overlay {
@@ -662,13 +687,18 @@
     );
   }
 
-  /* Info button: relocate to top-right corner of hero */
+  /* Info button: small pill pinned to top-right of hero.
+     Use !important on position props because the base .info-btn rule
+     is defined later in the file and would otherwise win the cascade. */
   .info-btn {
-    bottom   : auto;
-    top      : 12px;
-    right    : 12px;
-    padding  : 5px 10px 5px 8px;
-    font-size: 8px;
+    top      : 10px  !important;
+    right    : 10px  !important;
+    bottom   : auto  !important;
+    left     : auto  !important;
+    width    : auto  !important;
+    height   : auto  !important;
+    padding  : 4px 9px 4px 7px;
+    font-size: 7.5px;
   }
 
   /* ── Form section ───────────────────────────────────────────────── */
