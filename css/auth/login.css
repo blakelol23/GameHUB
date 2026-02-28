@@ -875,61 +875,9 @@
   pointer-events: none;
   opacity       : 0;
 }
-#globe-glitch-fx::before {           /* persistent scanline mask during glitch */
-  content   : '';
-  position  : absolute;
-  inset     : 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent       0px,
-    transparent       3px,
-    rgba(0, 0, 0, 0.2) 3px,
-    rgba(0, 0, 0, 0.2) 4px
-  );
-}
 
 /* ── Glitch keyframes ────────────────────────────────────────────── */
-.globe-glitching #hero-canvas { animation: globeGlitch 0.72s steps(1, end) forwards; }
-.globe-glitching #globe-glitch-fx { animation: glitchBands 0.72s steps(1, end) forwards; }
 .globe-reviving  #hero-canvas { animation: globeRevive 0.55s ease-out forwards; }
-
-/* RGB channel split + hue explosions on the canvas */
-@keyframes globeGlitch {
-  0%   { opacity:1;    filter: none;                                                                                  transform: none;           }
-  5%   { opacity:1;    filter: drop-shadow( 5px 0 0 rgba(255,0,80,.9)) drop-shadow(-5px 0 0 rgba(0,200,255,.9));      transform: translateX(-3px);}
-  10%  { opacity:1;    filter: drop-shadow(-7px 0 0 rgba(255,0,80,1))  drop-shadow( 7px 0 0 rgba(0,200,255,1))  brightness(1.5); transform: translateX(4px); }
-  15%  { opacity:1;    filter: hue-rotate(90deg)  saturate(7) contrast(2.2);                                          transform: translateX(-4px) scaleX(1.012); }
-  20%  { opacity:1;    filter: drop-shadow( 9px 0 0 rgba(255,0,80,1))  drop-shadow(-9px 0 0 rgba(0,200,255,1))  brightness(2.4); transform: translateX( 5px); }
-  25%  { opacity:1;    filter: hue-rotate(200deg) saturate(10) contrast(3);                                           transform: translateX(-5px);}
-  30%  { opacity:1;    filter: contrast(0) brightness(4);                                                             transform: translateX( 7px); }
-  35%  { opacity:1;    filter: drop-shadow( 4px 0 0 rgba(255,0,80,.8)) drop-shadow(-4px 0 0 rgba(0,200,255,.8)) hue-rotate(270deg); transform: translateX(-3px); }
-  42%  { opacity:0.9;  filter: none;                                                                                  transform: translateX( 2px); }
-  49%  { opacity:0.82; filter: hue-rotate(140deg) saturate(5);                                                        transform: none;           }
-  55%  { opacity:0.7;  filter: drop-shadow( 3px 0 0 rgba(255,0,80,.45)) drop-shadow(-3px 0 0 rgba(0,200,255,.45));    transform: translateX(-2px);}
-  62%  { opacity:0.52; filter: none;                                                                                  transform: none;           }
-  70%  { opacity:0.32; filter: hue-rotate(220deg) saturate(2);                                                        transform: none;           }
-  80%  { opacity:0.18; filter: none;                                                                                  transform: none;           }
-  90%  { opacity:0.09; filter: none;                                                                                  transform: none;           }
-  100% { opacity:0.05; filter: none;                                                                                  transform: none;           }
-}
-
-/* Horizontal colour tear bands — each step a different band + X offset */
-@keyframes glitchBands {
-  0%   { opacity:0; background:none; transform:none; }
-  5%   { opacity:1; background:linear-gradient(transparent 10%, rgba(0,212,255,.6) 10%, rgba(0,212,255,.6) 13%, transparent 13%); transform:translateX( 9px); }
-  10%  { background:linear-gradient(transparent 36%, rgba(255,0,80,.55) 36%, rgba(255,0,80,.55) 40%, transparent 40%); transform:translateX(-11px); }
-  15%  { background:linear-gradient(transparent 62%, rgba(120,0,255,.6) 62%, rgba(120,0,255,.6) 67%, transparent 67%, transparent 81%, rgba(0,212,255,.45) 81%, rgba(0,212,255,.45) 85%, transparent 85%); transform:translateX(13px); }
-  20%  { background:linear-gradient(rgba(255,0,80,.35) 0%, rgba(255,0,80,.35) 4%, transparent 4%, transparent 57%, rgba(0,212,255,.55) 57%, rgba(0,212,255,.55) 61%, transparent 61%); transform:translateX(-8px); }
-  25%  { background:linear-gradient(transparent 23%, rgba(255,200,0,.45) 23%, rgba(255,200,0,.45) 27%, transparent 27%, transparent 73%, rgba(255,0,80,.4) 73%, rgba(255,0,80,.4) 77%, transparent 77%); transform:translateX(10px); }
-  30%  { background:linear-gradient(transparent 47%, rgba(0,212,255,.65) 47%, rgba(0,212,255,.65) 53%, transparent 53%); transform:translateX(-12px); }
-  35%  { background:linear-gradient(transparent 6%, rgba(120,0,255,.55) 6%, rgba(120,0,255,.55) 10%, transparent 10%, transparent 89%, rgba(0,212,255,.5) 89%, rgba(0,212,255,.5) 93%, transparent 93%); transform:translateX(7px); }
-  41%  { background:none; transform:translateX(-4px); }
-  47%  { background:linear-gradient(transparent 70%, rgba(255,0,80,.4) 70%, rgba(255,0,80,.4) 74%, transparent 74%); transform:translateX(9px); }
-  54%  { background:none; transform:none; opacity:.55; }
-  67%  { opacity:.25; }
-  82%  { opacity:.1; }
-  100% { opacity:0; }
-}
 
 /* Sphere fades back in with a ghost-of-glitch flash */
 @keyframes globeRevive {

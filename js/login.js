@@ -45,6 +45,8 @@ const infoClose      = document.getElementById('info-close');
 
 let bgParticles = [], bgStars = [], heroDust = [], heroT = 0;
 let mouse = { x: -9999, y: -9999 };
+let _pulseRings = [], _pulseNext = 3500, _prevHeroNow = 0;
+let _glitchCvs = null, _glitchC = null, _glitchRAF = null;
 
 // Sphere direction, speed & color blend — manipulated during panel transitions
 let sphereDir    = 1;      // +1 forward, -1 reverse
@@ -159,6 +161,84 @@ function initHeroDust() {
   }));
 }
 
+// ── Globe atmosphere + decorations ──────────────────────────────────
+function _drawGlobeAtmosphere(cx, cy, R) {
+  const _cr = Math.round(sphereColorT * 95);
+  const _cg = Math.round(212 - sphereColorT * 162);
+  const _cb = Math.round(255 - sphereColorT * 45);
+  // Outer atmosphere halo (behind wireframe)
+  const ag = heroCtx.createRadialGradient(cx, cy, R * 0.88, cx, cy, R * 1.76);
+  ag.addColorStop(0,    `rgba(${_cr},${_cg},${_cb},0.13)`);
+  ag.addColorStop(0.42, `rgba(${_cr},${_cg},${_cb},0.05)`);
+  ag.addColorStop(1,    `rgba(${_cr},${_cg},${_cb},0)`);
+  heroCtx.beginPath();
+  heroCtx.arc(cx, cy, R * 1.76, 0, Math.PI * 2);
+  heroCtx.fillStyle = ag;
+  heroCtx.fill();
+  // Inner core brightspot (front-face highlight)
+  const cg = heroCtx.createRadialGradient(cx - R * 0.16, cy - R * 0.12, 0, cx, cy, R * 0.72);
+  cg.addColorStop(0, `rgba(${_cr},${_cg},${_cb},0.09)`);
+  cg.addColorStop(1, `rgba(${_cr},${_cg},${_cb},0)`);
+  heroCtx.beginPath();
+  heroCtx.arc(cx, cy, R * 0.72, 0, Math.PI * 2);
+  heroCtx.fillStyle = cg;
+  heroCtx.fill();
+}
+
+function _drawGlobePoles(cx, cy, R, cosY, sinY, cosX, sinX) {
+  const _cr = Math.round(sphereColorT * 95);
+  const _cg = Math.round(212 - sphereColorT * 162);
+  const _cb = Math.round(255 - sphereColorT * 45);
+  for (const [px, py, pz] of [[0, 1, 0], [0, -1, 0]]) {
+    const rx = px * cosY - pz * sinY, rz = px * sinY + pz * cosY;
+    const ry = py * cosX - rz * sinX, rzz = py * sinX + rz * cosX;
+    if (rzz < -0.1) continue;
+    const a  = Math.max(0, rzz * 0.90);
+    const sx = cx + rx * R, sy = cy + ry * R;
+    // Soft halo
+    heroCtx.beginPath();
+    heroCtx.arc(sx, sy, 10 * a, 0, Math.PI * 2);
+    heroCtx.fillStyle = `rgba(${_cr},${_cg},${_cb},${(a * 0.14).toFixed(3)})`;
+    heroCtx.fill();
+    // Core dot
+    heroCtx.beginPath();
+    heroCtx.arc(sx, sy, 2.8 * a, 0, Math.PI * 2);
+    heroCtx.fillStyle = `rgba(${_cr},${_cg},${_cb},${(a * 0.88).toFixed(3)})`;
+    heroCtx.fill();
+    // Cross marker
+    const cl = 12 * a;
+    heroCtx.beginPath();
+    heroCtx.moveTo(sx - cl, sy); heroCtx.lineTo(sx + cl, sy);
+    heroCtx.moveTo(sx, sy - cl); heroCtx.lineTo(sx, sy + cl);
+    heroCtx.strokeStyle = `rgba(${_cr},${_cg},${_cb},${(a * 0.38).toFixed(3)})`;
+    heroCtx.lineWidth = 0.75;
+    heroCtx.stroke();
+  }
+}
+
+function _tickPulseRings(cx, cy, R, dt) {
+  _pulseNext -= dt;
+  if (_pulseNext <= 0) {
+    _pulseRings.push({ prog: 0 });
+    _pulseNext = 2800 + Math.random() * 2200;
+  }
+  const _cr = Math.round(sphereColorT * 95);
+  const _cg = Math.round(212 - sphereColorT * 162);
+  const _cb = Math.round(255 - sphereColorT * 45);
+  for (let i = _pulseRings.length - 1; i >= 0; i--) {
+    const ring = _pulseRings[i];
+    ring.prog = Math.min(1, ring.prog + dt / 1150);
+    const rr  = R * (1.06 + ring.prog * 0.74);
+    const a   = (1 - ring.prog) * (1 - ring.prog) * 0.40;
+    if (a < 0.005) { _pulseRings.splice(i, 1); continue; }
+    heroCtx.beginPath();
+    heroCtx.arc(cx, cy, rr, 0, Math.PI * 2);
+    heroCtx.strokeStyle = `rgba(${_cr},${_cg},${_cb},${a.toFixed(3)})`;
+    heroCtx.lineWidth = 2.2 * (1 - ring.prog);
+    heroCtx.stroke();
+  }
+}
+
 function drawRing(getPt, cosY, sinY, cosX, sinX, cx, cy, R) {
   // Interpolate front-face color: cyan (0,212,255) → purple (95,50,210)
   const _cr = Math.round(sphereColorT * 95);
@@ -182,7 +262,9 @@ function drawRing(getPt, cosY, sinY, cosX, sinX, cx, cy, R) {
   }
 }
 
-function heroFrame() {
+function heroFrame(now = 0) {
+  const dt     = _prevHeroNow ? Math.min(now - _prevHeroNow, 50) : 16.7;
+  _prevHeroNow = now;
   heroT += sphereSpeed * sphereDir;
   const W = heroCanvas.width, H = heroCanvas.height;
   heroCtx.clearRect(0, 0, W, H);
@@ -191,6 +273,10 @@ function heroFrame() {
   const cosY = Math.cos(heroT * 1.4), sinY = Math.sin(heroT * 1.4);
   const cosX = Math.cos(SPHERE_CFG.tilt), sinX = Math.sin(SPHERE_CFG.tilt);
 
+  // ── Atmosphere glow (drawn before wireframe) ────────────
+  _drawGlobeAtmosphere(cx, cy, R);
+
+  // ── Wireframe sphere ─────────────────────────────────────
   for (let i = 1; i < SPHERE_CFG.nLat; i++) {
     const phi = (i / SPHERE_CFG.nLat) * Math.PI, ry = Math.cos(phi), rxz = Math.sin(phi);
     drawRing(f => { const th = f * Math.PI * 2; return [rxz * Math.cos(th), ry, rxz * Math.sin(th)]; },
@@ -204,6 +290,11 @@ function heroFrame() {
   drawRing(f => { const th = f * Math.PI * 2; return [Math.cos(th), 0, Math.sin(th)]; },
            cosY, sinY, cosX, sinX, cx, cy, R);
 
+  // ── Decorations (after wireframe, before dust) ───────────
+  _tickPulseRings(cx, cy, R, dt);
+  _drawGlobePoles(cx, cy, R, cosY, sinY, cosX, sinX);
+
+  // ── Floating dust ────────────────────────────────────────
   for (const p of heroDust) {
     p.x += p.vx; p.y += p.vy;
     if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
@@ -595,18 +686,97 @@ window.addEventListener('auth:returning', reinitForLogout);
 // INFO OVERLAY  —  globe glitch → wipe reveal → glitch-out
 // ════════════════════════════════════════════════════════════
 
-function _openInfoOverlay() {
-  // Phase 1: kick off the glitch on the globe side
-  authLeft.classList.add('globe-glitching');
-  infoBtn.setAttribute('hidden', '');
+// ── JS-driven canvas glitch ─────────────────────────────────────────
+function _ensureGlitchCanvas() {
+  if (_glitchCvs) return;
+  const fx = document.getElementById('globe-glitch-fx');
+  _glitchCvs = document.createElement('canvas');
+  _glitchCvs.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+  fx.appendChild(_glitchCvs);
+  _glitchC = _glitchCvs.getContext('2d');
+}
 
-  // Phase 2: glitch winds down (720ms) → freeze canvas as ghost, reveal overlay
-  setTimeout(() => {
-    authLeft.classList.remove('globe-glitching');
-    heroCanvas.style.opacity = '0.05';   // hold ghost state
+function _runGlitch(onDone) {
+  if (_glitchRAF) { cancelAnimationFrame(_glitchRAF); _glitchRAF = null; }
+  _ensureGlitchCanvas();
+  const fxEl = document.getElementById('globe-glitch-fx');
+  const W = heroCanvas.width, H = heroCanvas.height;
+  _glitchCvs.width = W;
+  _glitchCvs.height = H;
+  fxEl.style.opacity = '1';
+  const startT = performance.now();
+  const DUR    = 720;
+  const SLICE  = 11;
+  const N      = Math.ceil(H / SLICE);
+
+  function tick(now) {
+    const t     = Math.min(1, (now - startT) / DUR);
+    const inten = t < 0.38 ? 1 : 1 - (t - 0.38) / 0.62;   // full → fade after 38%
+    _glitchC.clearRect(0, 0, W, H);
+
+    // 1. Horizontal slice displacement — mirrors live canvas pixel data
+    for (let i = 0; i < N; i++) {
+      const sy   = i * SLICE;
+      const sh   = Math.min(SLICE, H - sy);
+      const torn = Math.random() < inten * 0.68;
+      const xOff = torn ? (Math.random() - 0.5) * 58 * inten : 0;
+      // Main slice (true canvas mirror)
+      _glitchC.drawImage(heroCanvas, 0, sy, W, sh, xOff, sy, W, sh);
+      // Chromatic aberration on torn slices
+      if (torn && Math.random() < 0.52) {
+        const split = (5 + Math.random() * 11) * inten;
+        _glitchC.save();
+        _glitchC.globalCompositeOperation = 'screen';
+        _glitchC.globalAlpha = 0.30 * inten;
+        _glitchC.drawImage(heroCanvas, 0, sy, W, sh, xOff + split, sy, W, sh);        // red ghost
+        _glitchC.globalAlpha = 0.24 * inten;
+        _glitchC.drawImage(heroCanvas, 0, sy, W, sh, xOff - split * 0.65, sy, W, sh); // cyan ghost
+        _glitchC.restore();
+      }
+    }
+
+    // 2. Colour tear bars
+    const nBars = Math.round((1 + Math.random() * 4) * inten);
+    for (let b = 0; b < nBars; b++) {
+      const bh = 1 + Math.random() * 20;
+      const by = Math.random() * H;
+      const ba = (0.20 + Math.random() * 0.45) * inten;
+      const bc = Math.random() > 0.5 ? '0,212,255' : '255,0,80';
+      _glitchC.fillStyle = `rgba(${bc},${ba.toFixed(2)})`;
+      _glitchC.fillRect(0, by, W, bh);
+    }
+
+    // 3. Sporadic bright flash line
+    if (Math.random() < 0.10 * inten) {
+      _glitchC.fillStyle = `rgba(255,255,255,${(0.18 * inten).toFixed(2)})`;
+      _glitchC.fillRect(0, Math.random() * H, W, 1 + Math.random() * 3);
+    }
+
+    // 4. Scanline texture over everything
+    _glitchC.fillStyle = 'rgba(0,0,0,0.17)';
+    for (let sl = 0; sl < H; sl += 4) _glitchC.fillRect(0, sl + 3, W, 1);
+
+    heroCanvas.style.opacity = (0.05 + inten * 0.95).toFixed(3);
+
+    if (t < 1) {
+      _glitchRAF = requestAnimationFrame(tick);
+    } else {
+      _glitchC.clearRect(0, 0, W, H);
+      fxEl.style.opacity = '';
+      heroCanvas.style.opacity = '0.05';
+      _glitchRAF = null;
+      if (onDone) onDone();
+    }
+  }
+  _glitchRAF = requestAnimationFrame(tick);
+}
+
+function _openInfoOverlay() {
+  infoBtn.setAttribute('hidden', '');
+  _runGlitch(() => {
     infoOverlay.removeAttribute('hidden');
     infoOverlay.removeAttribute('aria-hidden');
-  }, 720);
+  });
 }
 
 function _closeInfoOverlay() {
