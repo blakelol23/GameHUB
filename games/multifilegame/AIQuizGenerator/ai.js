@@ -13,7 +13,7 @@ async function generateQuiz(topic) {
   const model = 'llama-3.1-8b-instant';
 
   // Prompt instructs the AI to generate unbiased, original, multiple-choice quiz questions
-  const prompt = `Generate a JSON array of 3 original, unbiased, multiple-choice quiz questions about the topic: "${topic}".\n\nEach question should be an object with:\n- question: the question text\n- answers: an array of 4 answer choices\n- correct: the index (0-3) of the correct answer\n\nExample:\n[\n  {\n    "question": "What is the capital of France?",\n    "answers": ["Berlin", "London", "Paris", "Rome"],\n    "correct": 2\n  },\n  ...\n]\n\nOnly output the JSON array, nothing else.`;
+  const prompt = `Generate a JSON array of 10 original, unbiased, multiple-choice quiz questions about the topic: "${topic}".\n\nEach question should be an object with:\n- question: the question text\n- answers: an array of 4 answer choices\n- correct: the index (0-3) of the correct answer\n\nExample:\n[\n  {\n    "question": "What is the capital of France?",\n    "answers": ["Berlin", "London", "Paris", "Rome"],\n    "correct": 2\n  },\n  ...\n]\n\nOnly output the JSON array, nothing else.`;
 
   try {
     const res = await fetch(endpoint, {

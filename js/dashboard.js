@@ -42,6 +42,7 @@ const SECTION_LABELS = {
   friends : 'Friends',
   messages: 'Messages',
   settings: 'Settings',
+  aichat  : 'AI Chat',
 };
 
 function switchSection(name) {
