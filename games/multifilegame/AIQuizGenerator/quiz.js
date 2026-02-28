@@ -1,6 +1,6 @@
 // quiz.js — Handles quiz flow and UI
 
-import { generateQuiz } from './ai.js';
+
 
 const setupSection = document.getElementById('setup-section');
 const quizSection = document.getElementById('quiz-section');
@@ -83,7 +83,7 @@ generateBtn.onclick = async () => {
   if (!topic) return;
   generateBtn.disabled = true;
   generateBtn.textContent = 'Generating...';
-  const quizData = await generateQuiz(topic);
+  const quizData = await window.generateQuiz(topic);
   generateBtn.disabled = false;
   generateBtn.textContent = 'Generate Quiz';
   if (quizData && quizData.length) {

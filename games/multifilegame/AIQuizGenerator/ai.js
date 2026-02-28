@@ -6,7 +6,7 @@
  *   [{ question: string, answers: [string, ...], correct: number }]
  *
  */
-export async function generateQuiz(topic) {
+async function generateQuiz(topic) {
     // To change the key, base64-encode your Groq API key and replace the string below.
     const KEY = atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
   const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
@@ -54,3 +54,6 @@ export async function generateQuiz(topic) {
     return [];
   }
 }
+
+// Attach to window for use in quiz.js
+window.generateQuiz = generateQuiz;
