@@ -1133,6 +1133,11 @@
         </div>
       </div>
       <div class="chat-input-bar">
+        <div id="chat-img-preview-bar" class="chat-img-preview-bar" style="display:none"></div>
+        <input type="file" id="chat-img-file" accept="image/*" style="display:none" aria-hidden="true" />
+        <button class="chat-img-btn" id="chat-img-btn" title="Attach an image" aria-label="Attach image">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
         <textarea
           id="chat-input"
           class="chat-input"

@@ -51,6 +51,8 @@ function switchSection(name) {
   if (sectionTitle) sectionTitle.textContent = SECTION_LABELS[name] ?? name;
   // Messages section gets full-height borderless layout
   dashContent?.classList.toggle('section-messages-active', name === 'messages');
+  // AI Chat section — same treatment so the feed scrolls internally
+  dashContent?.classList.toggle('section-aichat-active', name === 'aichat');
   // Let modules react to section changes
   window.dispatchEvent(new CustomEvent('dashboard:section', { detail: { name } }));
 }

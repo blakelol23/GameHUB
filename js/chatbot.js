@@ -7,10 +7,12 @@ import { auth, db }   from './auth.js';
 import { ref, get }   from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js';
 
 // ── Config ───────────────────────────────────────────────────────
-const _KEY     = () => atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
-const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL    = 'llama-3.1-8b-instant';
-const MAX_HIST = 20; // max message pairs in context
+const _KEY          = () => atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
+const ENDPOINT      = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL         = 'llama-3.1-8b-instant';          // text-only model
+const VISION_MODEL  = 'llama-3.2-11b-vision-preview';  // used when an image is attached
+const MAX_HIST      = 20; // max message pairs in context
+const MAX_IMG_BYTES = 4 * 1024 * 1024; // 4 MB base64 limit
 
 // ── User context (populated on dashboard:user-ready) ─────────────
 let _uid        = null;
@@ -102,7 +104,8 @@ async function loadUserData(uid) {
     }
   } catch { _recentGames = []; }
 }
-
+// ── Image state ───────────────────────────────────────────────────────────
+let _pendingImage = null; // { dataUrl, mimeType } | null
 // ── DOM helpers (grabbed lazily inside init) ──────────────────────
 let _feed, _input, _sendBtn, _clearBtn;
 
@@ -257,20 +260,60 @@ export function requestAddFriend(username) {
   });
 }
 
+// ── Image helpers ───────────────────────────────────────────────────
+function _clearPendingImage() {
+  _pendingImage = null;
+  const bar = document.getElementById('chat-img-preview-bar');
+  if (bar) { bar.innerHTML = ''; bar.style.display = 'none'; }
+  const fileInput = document.getElementById('chat-img-file');
+  if (fileInput) fileInput.value = '';
+}
+
+function _showImagePreview(dataUrl) {
+  const bar = document.getElementById('chat-img-preview-bar');
+  if (!bar) return;
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <div class="chat-img-thumb">
+      <img src="${dataUrl}" alt="Preview" />
+      <button class="chat-img-thumb-remove" aria-label="Remove image" id="chat-img-remove">&times;</button>
+    </div>
+    <span style="font-size:10px;color:var(--dash-text-dim);letter-spacing:.05em">Image ready to send</span>`;
+  document.getElementById('chat-img-remove')?.addEventListener('click', _clearPendingImage);
+}
+
 // ── Core send ─────────────────────────────────────────────────────
 export async function sendMessage(text) {
   text = text.trim();
-  if (!text) return;
+  const imageSnap = _pendingImage ? { ..._pendingImage } : null;
+  if (!text && !imageSnap) return;
 
-  _history.push({ role: 'user', content: text });
+  // Build the user message content
+  // If there's an image, use the vision content array format
+  let userContent;
+  if (imageSnap) {
+    userContent = [
+      { type: 'image_url', image_url: { url: imageSnap.dataUrl } },
+      ...(text ? [{ type: 'text', text }] : [{ type: 'text', text: 'What do you see in this image?' }])
+    ];
+  } else {
+    userContent = text;
+  }
+
+  _history.push({ role: 'user', content: userContent });
   if (_history.length > MAX_HIST * 2) _history.splice(0, 2);
 
-  _appendMessage('user', text);
+  _appendMessage('user', text || '(image)', imageSnap?.dataUrl ?? null);
   if (_input) { _input.value = ''; _input.style.height = 'auto'; }
+  _clearPendingImage();
   _setDisabled(true);
   _showTyping();
 
   try {
+    // Use vision model if this message (or any recent one) has an image
+    const hasVision = _history.some(m => Array.isArray(m.content));
+    const model = hasVision ? VISION_MODEL : MODEL;
+
     const res = await fetch(ENDPOINT, {
       method : 'POST',
       headers: {
@@ -278,7 +321,7 @@ export async function sendMessage(text) {
         'Authorization': `Bearer ${_KEY()}`
       },
       body: JSON.stringify({
-        model      : MODEL,
+        model,
         messages   : [{ role: 'system', content: buildSystemPrompt() }, ..._history],
         max_tokens : 1024,
         temperature: 0.75
@@ -350,6 +393,34 @@ function init({ user, profile } = {}) {
 
   _sendBtn?.addEventListener('click', () => sendMessage(_input?.value ?? ''));
   _clearBtn?.addEventListener('click', _clearConversation);
+
+  // ── Image upload wiring ─────────────────────────────────────────
+  const imgBtn   = document.getElementById('chat-img-btn');
+  const imgFile  = document.getElementById('chat-img-file');
+
+  imgBtn?.addEventListener('click', () => imgFile?.click());
+
+  imgFile?.addEventListener('change', () => {
+    const file = imgFile.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      // Warn if very large (> 4 MB base64 ≈ 3 MB file)
+      if (dataUrl.length > MAX_IMG_BYTES) {
+        alert('Image is too large. Please use an image under 3 MB.');
+        imgFile.value = '';
+        return;
+      }
+      _pendingImage = { dataUrl, mimeType: file.type };
+      _showImagePreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 // ── Bootstrap on dashboard:user-ready ────────────────────────────
@@ -358,6 +429,26 @@ window.addEventListener('dashboard:user-ready', async ({ detail }) => {
   if (profile?.username) _username = profile.username;
   if (user?.uid) await loadUserData(user.uid);
   init({ user, profile });
+});
+
+// Section switch: clean up AI chat panel when leaving
+window.addEventListener('dashboard:section', (e) => {
+  const name = e?.detail?.name;
+  const section = document.getElementById('section-aichat');
+  if (!section) return;
+  if (name !== 'aichat') {
+    // Leaving AI chat: clean up typing, input, image preview, scroll
+    document.getElementById('chat-typing-indicator')?.remove();
+    const input = document.getElementById('chat-input');
+    if (input) {
+      input.value = '';
+      input.style.height = 'auto';
+      input.blur();
+    }
+    _clearPendingImage();
+    const feed = document.getElementById('chat-feed');
+    if (feed) feed.scrollTop = 0;
+  }
 });
 
 // Fallback: if event already fired

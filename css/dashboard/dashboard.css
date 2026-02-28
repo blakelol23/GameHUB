@@ -412,6 +412,12 @@
   padding : 0;
   overflow: hidden;
 }
+
+/* AI Chat section — same treatment: no outer padding, feed scrolls internally */
+.dash-content.section-aichat-active {
+  padding : 0;
+  overflow: hidden;
+}
 #section-messages.active {
   display       : flex;
   flex-direction: column;
