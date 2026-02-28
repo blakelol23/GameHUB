@@ -1101,51 +1101,53 @@
         <!-- ══════ AI CHAT ══════ -->
         <section class="dash-section" id="section-aichat" aria-label="AI Chat">
 
-          <div class="chat-header">
-            <div class="chat-header-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="2.5"/></svg>
-            </div>
-            <div class="chat-header-meta">
-              <div class="chat-header-title">TFG_AI // ASSISTANT</div>
-              <div class="chat-header-sub">Powered by AI &mdash; ask me anything</div>
-            </div>
-            <span class="chat-status-dot" aria-hidden="true"></span>
-            <button class="chat-clear-btn" id="chat-clear-btn" title="Clear conversation" aria-label="Clear conversation">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-              Clear
-            </button>
+  <div class="chatbot-panel">
+    <div class="chat-header">
+      <div class="chat-header-icon">
+        <img src="img/TFGCO.png" alt="TFG-AI" style="width:24px;height:24px;border-radius:6px;object-fit:cover;" />
+      </div>
+      <div class="chat-header-meta">
+        <div class="chat-header-title">TFG-AI // ASSISTANT</div>
+        <div class="chat-header-sub">Powered by AI &mdash; ask me anything</div>
+      </div>
+      <span class="chat-status-dot" aria-hidden="true"></span>
+      <button class="chat-clear-btn" id="chat-clear-btn" title="Clear conversation" aria-label="Clear conversation">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Clear
+      </button>
+    </div>
+    <div class="chatbot-main">
+      <div class="chat-feed" id="chat-feed" aria-live="polite" aria-label="Chat messages">
+        <div class="chat-welcome">
+          <div class="chat-welcome-icon">
+            <img src="img/TFGCO.png" alt="TFG-AI" style="width:32px;height:32px;border-radius:8px;object-fit:cover;" />
           </div>
-
-          <div class="chat-feed" id="chat-feed" aria-live="polite" aria-label="Chat messages">
-            <div class="chat-welcome">
-              <div class="chat-welcome-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-width="2.5"/></svg>
-              </div>
-              <h3>TFG-AI ASSISTANT</h3>
-              <p>Ask me anything &mdash; games, platform help, or just chat. I&rsquo;m here to help.</p>
-              <div class="chat-welcome-chips">
-                <button class="chat-chip" data-prompt="What games are available in GameHUB?">What games are available?</button>
-                <button class="chat-chip" data-prompt="Give me a game recommendation">Give me a recommendation</button>
-                <button class="chat-chip" data-prompt="How do I add a friend on GameHUB?">How do I add a friend?</button>
-                <button class="chat-chip" data-prompt="Tell me something interesting about gaming">Tell me something interesting</button>
-              </div>
-            </div>
+          <h3>TFG-AI ASSISTANT</h3>
+          <p>Ask me anything &mdash; games, platform help, or just chat. I&rsquo;m here to help.</p>
+          <div class="chat-welcome-chips">
+            <button class="chat-chip" data-prompt="What games are available in GameHUB?">What games are available?</button>
+            <button class="chat-chip" data-prompt="Give me a game recommendation">Give me a recommendation</button>
+            <button class="chat-chip" data-prompt="How do I add a friend on GameHUB?">How do I add a friend?</button>
+            <button class="chat-chip" data-prompt="Tell me something interesting about gaming">Tell me something interesting</button>
           </div>
-
-          <div class="chat-input-bar">
-            <textarea
-              id="chat-input"
-              class="chat-input"
-              placeholder="Ask TFG-AI anything…"
-              rows="1"
-              maxlength="2000"
-              autocomplete="off"
-              aria-label="Chat input"
-            ></textarea>
-            <button class="chat-send-btn" id="chat-send-btn" aria-label="Send message">
-              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </div>
+        </div>
+      </div>
+      <div class="chat-input-bar">
+        <textarea
+          id="chat-input"
+          class="chat-input"
+          placeholder="Ask TFG-AI anything…"
+          rows="1"
+          maxlength="2000"
+          autocomplete="off"
+          aria-label="Chat input"
+        ></textarea>
+        <button class="chat-send-btn" id="chat-send-btn" aria-label="Send message">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
 
         </section><!-- /section-aichat -->
 
