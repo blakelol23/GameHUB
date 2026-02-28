@@ -1,3 +1,33 @@
+/* AI Chat panel mobile override: input bar always pinned, feed scrolls above */
+@media (max-width: 600px) {
+  #section-aichat,
+  .chatbot-panel,
+  .chatbot-main {
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+  }
+  .chatbot-panel {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+  .chat-input-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    border-radius: 0;
+    max-width: 100vw;
+    margin: 0;
+    z-index: 100;
+    box-shadow: 0 -2px 16px 0 rgba(0,0,0,0.18);
+  }
+  .chatbot-main {
+    padding-bottom: 0 !important;
+  }
+  .chat-feed {
+    padding-bottom: 16px;
+  }
+}
 /* ════════════════════════════════════════════════════════════
    RESPONSIVE.CSS  —  Adaptive layout engine + Mobile overhaul
    Breakpoints toggled live by js/responsive.js via ResizeObserver:
