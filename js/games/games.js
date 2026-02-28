@@ -42,6 +42,15 @@ const GAMES = [
     thumb: null,
     href : 'games/multifilegame/Blockie%20Tower%20Defense/v2/index.html',
   },
+  {
+    id   : 'ai-quiz-generator',
+    title: 'AI Quiz Generator',
+    desc : 'Generate and play quizzes on any topic, powered by real AI. Every quiz is unique and unbiased!',
+    tag  : 'Trivia',
+    badge: 'new',
+    thumb: null,
+    href : 'games/multifilegame/AIQuizGenerator/index.html',
+  },
 ];
 
 // ── DOM refs ───────────────────────────────────────────────────
