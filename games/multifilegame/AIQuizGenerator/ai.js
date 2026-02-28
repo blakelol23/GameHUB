@@ -1,17 +1,16 @@
-// ai.js — Handles AI question generation using Groq API
+// ai.js — Handles AI question generation
 
 /**
- * Generates a quiz for a given topic using Groq API.
+ * Generates a quiz for a given topic
  * Returns a Promise resolving to an array of questions:
  *   [{ question: string, answers: [string, ...], correct: number }]
  *
- * IMPORTANT: Insert your Groq API key below where indicated.
  */
 export async function generateQuiz(topic) {
     // To change the key, base64-encode your Groq API key and replace the string below.
     const KEY = atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
   const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-  const model = 'mixtral-8x7b-32768'; // You can change to another Groq-supported model if desired
+  const model = 'mixtral-8x7b-32768';
 
   // Prompt instructs the AI to generate unbiased, original, multiple-choice quiz questions
   const prompt = `Generate a JSON array of 3 original, unbiased, multiple-choice quiz questions about the topic: "${topic}".\n\nEach question should be an object with:\n- question: the question text\n- answers: an array of 4 answer choices\n- correct: the index (0-3) of the correct answer\n\nExample:\n[\n  {\n    "question": "What is the capital of France?",\n    "answers": ["Berlin", "London", "Paris", "Rome"],\n    "correct": 2\n  },\n  ...\n]\n\nOnly output the JSON array, nothing else.`;
