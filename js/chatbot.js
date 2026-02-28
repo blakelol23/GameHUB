@@ -314,27 +314,35 @@ export async function sendMessage(text) {
     const hasVision = _history.some(m => Array.isArray(m.content));
     const model = hasVision ? VISION_MODEL : MODEL;
 
-    const res = await fetch(ENDPOINT, {
-      method : 'POST',
-      headers: {
-        'Content-Type' : 'application/json',
-        'Authorization': `Bearer ${_KEY()}`
-      },
-      body: JSON.stringify({
-        model,
-        messages   : [{ role: 'system', content: buildSystemPrompt() }, ..._history],
-        max_tokens : 1024,
-        temperature: 0.75
-      })
-    });
-
-    if (!res.ok) {
-      const t = await res.text();
-      console.error('[TFG-AI] API error:', t);
-      throw new Error(`API ${res.status}`);
+    async function doFetch(modelToUse) {
+      const r = await fetch(ENDPOINT, {
+        method : 'POST',
+        headers: {
+          'Content-Type' : 'application/json',
+          'Authorization': `Bearer ${_KEY()}`
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages   : [{ role: 'system', content: buildSystemPrompt() }, ..._history],
+          max_tokens : 1024,
+          temperature: 0.75
+        })
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        console.error('[TFG-AI] API error:', t);
+        const errJson = (() => { try { return JSON.parse(t); } catch { return null; } })();
+        if (modelToUse === VISION_MODEL && (r.status === 404 || (errJson?.error?.code === 'model_not_found'))) {
+          // vision model unavailable/unauthorized: retry with plain text model
+          console.warn('[TFG-AI] vision model unavailable, falling back to text model');
+          return doFetch(MODEL);
+        }
+        throw new Error(`API ${r.status}`);
+      }
+      return await r.json();
     }
 
-    const data  = await res.json();
+    const data = await doFetch(model);
     const reply = data.choices?.[0]?.message?.content?.trim() || '…';
 
     _history.push({ role: 'assistant', content: reply });
