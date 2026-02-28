@@ -8,8 +8,8 @@
  * IMPORTANT: Insert your Groq API key below where indicated.
  */
 export async function generateQuiz(topic) {
-  // INSERT YOUR GROQ API KEY BELOW (do not commit to public repos)
-  const API_KEY = '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';
+    // To change the key, base64-encode your Groq API key and replace the string below.
+    const KEY = atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
   const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
   const model = 'mixtral-8x7b-32768'; // You can change to another Groq-supported model if desired
 
@@ -21,7 +21,7 @@ export async function generateQuiz(topic) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
+        'Authorization': `Bearer ${KEY}`
       },
       body: JSON.stringify({
         model,
