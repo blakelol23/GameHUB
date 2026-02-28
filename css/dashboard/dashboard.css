@@ -1,3 +1,10 @@
+/* Hide all dashboard sections by default; show only the active one */
+.dash-section {
+  display: none;
+}
+.dash-section.active {
+  display: flex;
+}
 /* ════════════════════════════════════════════════════════════
    DASHBOARD — Layout, Sidebar, Topbar, Shared Utilities
    ════════════════════════════════════════════════════════════ */
