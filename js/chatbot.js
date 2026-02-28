@@ -10,7 +10,7 @@ import { ref, get }   from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-
 const _KEY          = () => atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
 const ENDPOINT      = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL         = 'llama-3.1-8b-instant';          // text-only model
-const VISION_MODEL  = 'llama-3.2-11b-vision-preview';  // used when an image is attached
+const VISION_MODEL  = 'llama-3.3-32b-vision-preview';  // used when an image is attached (replacement for deprecated 3.2 model)
 const MAX_HIST      = 20; // max message pairs in context
 const MAX_IMG_BYTES = 4 * 1024 * 1024; // 4 MB base64 limit
 
