@@ -10,7 +10,7 @@ async function generateQuiz(topic) {
     // To change the key, base64-encode your Groq API key and replace the string below.
     const KEY = atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
   const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-  const model = 'mixtral-8x7b-32768';
+  const model = 'llama-3.1-8b-instant';
 
   // Prompt instructs the AI to generate unbiased, original, multiple-choice quiz questions
   const prompt = `Generate a JSON array of 3 original, unbiased, multiple-choice quiz questions about the topic: "${topic}".\n\nEach question should be an object with:\n- question: the question text\n- answers: an array of 4 answer choices\n- correct: the index (0-3) of the correct answer\n\nExample:\n[\n  {\n    "question": "What is the capital of France?",\n    "answers": ["Berlin", "London", "Paris", "Rome"],\n    "correct": 2\n  },\n  ...\n]\n\nOnly output the JSON array, nothing else.`;
@@ -32,7 +32,11 @@ async function generateQuiz(topic) {
         temperature: 0.7
       })
     });
-    if (!res.ok) throw new Error('Groq API error: ' + res.status);
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error('Groq error body:', errBody);
+      throw new Error('Groq API error: ' + res.status + ' — ' + errBody);
+    }
     const data = await res.json();
     // Extract the JSON array from the AI's response
     const text = data.choices?.[0]?.message?.content || '';
