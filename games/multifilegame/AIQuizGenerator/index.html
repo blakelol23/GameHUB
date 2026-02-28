@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Quiz Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="quiz-app">
+    <h1>AI Quiz Generator</h1>
+    <div id="setup-section">
+      <label for="topic-input">Quiz Topic:</label>
+      <input type="text" id="topic-input" placeholder="e.g. Space, History, JavaScript">
+      <button id="generate-btn">Generate Quiz</button>
+    </div>
+    <div id="quiz-section" hidden>
+      <div id="question-container"></div>
+      <div id="answers-container"></div>
+      <button id="next-btn" hidden>Next</button>
+      <div id="feedback"></div>
+    </div>
+    <div id="result-section" hidden>
+      <h2>Quiz Complete!</h2>
+      <div id="score"></div>
+      <button id="restart-btn">Restart</button>
+    </div>
+  </div>
+  <script src="ai.js"></script>
+  <script src="quiz.js"></script>
+</body>
+</html>
