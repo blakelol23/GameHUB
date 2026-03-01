@@ -14,6 +14,45 @@ const VISION_MODEL  = 'llama-3.3-32b-vision-preview';  // used when an image is 
 const MAX_HIST      = 20; // max message pairs in context
 const MAX_IMG_BYTES = 4 * 1024 * 1024; // 4 MB base64 limit
 
+// ── Tool definitions (Groq function-calling) ─────────────────────
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name       : 'navigate_to_section',
+      description: 'Navigate the GameHUB dashboard to a specific section.',
+      parameters : {
+        type      : 'object',
+        properties: {
+          section: {
+            type       : 'string',
+            enum       : ['overview', 'games', 'profile', 'friends', 'messages', 'settings'],
+            description: 'The section to navigate to'
+          }
+        },
+        required: ['section']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name       : 'add_friend',
+      description: 'Send a friend request to another user by their exact username.',
+      parameters : {
+        type      : 'object',
+        properties: {
+          username: {
+            type       : 'string',
+            description: 'The exact username to send a friend request to'
+          }
+        },
+        required: ['username']
+      }
+    }
+  }
+];
+
 // ── User context (populated on dashboard:user-ready) ─────────────
 let _uid        = null;
 let _username   = 'User';
@@ -147,11 +186,11 @@ Friends: ${friendsList}
 Recently played games: ${gamesList}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ACTIONS YOU CAN PERFORM (confirm before doing)
+ACTIONS YOU CAN PERFORM (tools — a Yes/No popup is shown to the user automatically)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Always ask for consent first. Never perform an action unless the user agrees.
-- Navigate to any section: overview, games, profile, friends, messages, settings
-- Add a friend by username (show a confirmation message first, then proceed only on yes)
+You have two callable tools. When you call them the user sees a Yes/No confirmation popup — you do NOT need to ask permission in your text first. Just call the tool directly and optionally include a short accompanying message.
+- navigate_to_section(section): navigate to any of: overview, games, profile, friends, messages, settings
+- add_friend(username): send a friend request to a user by their exact username
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PERSONALITY
@@ -323,42 +362,61 @@ function _removeTyping() {
   document.getElementById('chat-typing-indicator')?.remove();
 }
 
-// ── Consent dialog ────────────────────────────────────────────────
-function _showConsent(msg, onYes) {
-  const dlg = document.createElement('div');
-  dlg.className = 'chat-consent-dialog';
-  dlg.innerHTML = `
-    <div class="chat-consent-msg">${_escHtml(msg)}</div>
-    <div class="chat-consent-actions">
-      <button class="chat-consent-yes">Yes, go ahead</button>
-      <button class="chat-consent-no">No thanks</button>
+// ── Consent modal (floating Yes/No popup) ────────────────────────
+function _showConsentModal(question, onYes, onNo) {
+  document.getElementById('chat-consent-modal')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'chat-consent-modal';
+  overlay.className = 'chat-consent-overlay';
+  overlay.innerHTML = `
+    <div class="chat-consent-box">
+      <p class="chat-consent-question">${_escHtml(question)}</p>
+      <div class="chat-consent-btns">
+        <button class="chat-consent-btn chat-consent-btn--yes">Yes</button>
+        <button class="chat-consent-btn chat-consent-btn--no">No</button>
+      </div>
     </div>`;
-  _feed?.appendChild(dlg);
-  _scrollToBottom();
-  dlg.querySelector('.chat-consent-yes').onclick = () => { dlg.remove(); onYes(); };
-  dlg.querySelector('.chat-consent-no').onclick  = () => { dlg.remove(); };
+  (document.getElementById('section-aichat') ?? document.body).appendChild(overlay);
+  overlay.querySelector('.chat-consent-btn--yes').onclick = () => { overlay.remove(); onYes(); };
+  overlay.querySelector('.chat-consent-btn--no').onclick  = () => { overlay.remove(); onNo?.(); };
 }
 
-// ── Panel switching ───────────────────────────────────────────────
-export function requestPanelSwitch(section) {
-  const labels = { overview:'Overview', games:'Game Library', friends:'Friends', messages:'Messages', profile:'Profile', settings:'Settings' };
-  const label  = labels[section] || section;
-  _showConsent(`Open the ${label} panel?`, () => {
-    document.querySelector(`.dash-nav-item[data-section="${section}"]`)?.click();
-  });
-}
-
-// ── Add friend ────────────────────────────────────────────────────
-export function requestAddFriend(username) {
-  _showConsent(`Send a friend request to "${username}"?`, () => {
-    // Navigate to Friends panel, fill in the input and click Add
-    document.querySelector('.dash-nav-item[data-section="friends"]')?.click();
-    setTimeout(() => {
-      const input = document.getElementById('fr-search');
-      const btn   = document.getElementById('fr-add-btn');
-      if (input && btn) { input.value = username; btn.click(); }
-    }, 300);
-  });
+// ── Handle tool calls from the AI ────────────────────────────────
+function _handleToolCall(name, args) {
+  const SECTION_LABELS = { overview:'Overview', games:'Game Library', profile:'Profile', friends:'Friends', messages:'Messages', settings:'Settings' };
+  if (name === 'navigate_to_section') {
+    const label = SECTION_LABELS[args.section] || args.section;
+    _showConsentModal(
+      `Navigate to ${label}?`,
+      () => {
+        document.querySelector(`.dash-nav-item[data-section="${args.section}"]`)?.click();
+        _appendMessage('assistant', `Taking you to ${label}! 🚀`);
+        _history.push({ role: 'assistant', content: `Navigated to ${label}.` });
+      },
+      () => {
+        _appendMessage('assistant', `No worries! Let me know if there's anything else I can help with 😊`);
+        _history.push({ role: 'assistant', content: 'User declined navigation.' });
+      }
+    );
+  } else if (name === 'add_friend') {
+    _showConsentModal(
+      `Send a friend request to "${args.username}"?`,
+      () => {
+        document.querySelector('.dash-nav-item[data-section="friends"]')?.click();
+        setTimeout(() => {
+          const input = document.getElementById('fr-search');
+          const btn   = document.getElementById('fr-add-btn');
+          if (input && btn) { input.value = args.username; btn.click(); }
+        }, 350);
+        _appendMessage('assistant', `Friend request sent to ${_escHtml(args.username)}! 👋`);
+        _history.push({ role: 'assistant', content: `Sent friend request to ${args.username}.` });
+      },
+      () => {
+        _appendMessage('assistant', `Got it, no request sent. Let me know if you need anything else!`);
+        _history.push({ role: 'assistant', content: 'User declined friend request.' });
+      }
+    );
+  }
 }
 
 // ── Image helpers ───────────────────────────────────────────────────
@@ -438,10 +496,11 @@ export async function sendMessage(text) {
           'Authorization': `Bearer ${_KEY()}`
         },
         body: JSON.stringify({
-          model: modelToUse,
+          model      : modelToUse,
           messages   : messages,
           max_tokens : 1024,
-          temperature: 0.75
+          temperature: 0.75,
+          ...(modelToUse === MODEL ? { tools: TOOLS, tool_choice: 'auto' } : {})
         })
       });
       if (!r.ok) {
@@ -458,12 +517,26 @@ export async function sendMessage(text) {
       return await r.json();
     }
 
-    const data = await doFetch(model);
-    const reply = data.choices?.[0]?.message?.content?.trim() || '…';
+    const data   = await doFetch(model);
+    const choice  = data.choices?.[0];
+    const msg     = choice?.message;
 
-    _history.push({ role: 'assistant', content: reply });
-    _removeTyping();
-    _appendMessage('assistant', reply);
+    if (choice?.finish_reason === 'tool_calls' && msg?.tool_calls?.length) {
+      // AI invoked a tool — remove typing indicator and show consent popup
+      if (msg.content?.trim()) {
+        _history.push({ role: 'assistant', content: msg.content.trim() });
+        _appendMessage('assistant', msg.content.trim());
+      }
+      _removeTyping();
+      const tc   = msg.tool_calls[0];
+      const args = (() => { try { return JSON.parse(tc.function.arguments); } catch { return {}; } })();
+      _handleToolCall(tc.function.name, args);
+    } else {
+      const reply = msg?.content?.trim() || '…';
+      _history.push({ role: 'assistant', content: reply });
+      _removeTyping();
+      _appendMessage('assistant', reply);
+    }
 
   } catch (err) {
     _removeTyping();
