@@ -51,7 +51,7 @@ window.openUserProfile = async function(uid) {
       get(ref(db, `users/${uid}/username`)),
       get(ref(db, `users/${uid}/avatarColor`)),
       get(ref(db, `users/${uid}/avatarPhoto`)),
-      get(ref(db, `users/${uid}/role`)),
+      get(ref(db, `roles/${uid}`)),          // authoritative — not writable by users
       get(ref(db, `users/${uid}/bio`)),
       get(ref(db, `users/${uid}/createdAt`)),
       get(ref(db, `presence/${uid}`)),
@@ -61,7 +61,10 @@ window.openUserProfile = async function(uid) {
     const username   = nameSnap.val()   ?? 'Unknown';
     const color      = colSnap.val()    ?? 'cyan';
     const photo      = photoSnap.val()  ?? null;
-    const role       = roleSnap.val()   ?? 'USER';
+    const rv         = roleSnap.val();
+    const role       = rv
+      ? (typeof rv === 'string' ? rv.toLowerCase() : (rv?.role?.toLowerCase() ?? 'user'))
+      : 'user';
     const bio        = bioSnap.val()    ?? '';
     const createdAt  = joinedSnap.val() ?? null;
     const presence   = presSnap.val()   ?? null;
@@ -92,13 +95,18 @@ window.openUserProfile = async function(uid) {
 
     // Role badge
     const roleColors = {
-      OWNER: { bg:'rgba(245,166,35,0.15)',color:'#f5a623',border:'rgba(245,166,35,0.35)' },
-      ADMIN: { bg:'rgba(168,85,247,0.15)',color:'#a855f7',border:'rgba(168,85,247,0.35)' },
-      MOD  : { bg:'rgba(68,221,136,0.12)',color:'#44dd88',border:'rgba(68,221,136,0.28)' },
-      USER : { bg:'rgba(0,212,255,0.08)', color:'#00d4ff',border:'rgba(0,212,255,0.18)' },
+      owner  : { bg:'rgba(245,166,35,0.15)',  color:'#f5a623', border:'rgba(245,166,35,0.35)'  },
+      admin  : { bg:'rgba(168,85,247,0.15)',  color:'#a855f7', border:'rgba(168,85,247,0.35)'  },
+      mod    : { bg:'rgba(68,221,136,0.12)',  color:'#44dd88', border:'rgba(68,221,136,0.28)'  },
+      tester : { bg:'rgba(0,212,255,0.08)',   color:'#00d4ff', border:'rgba(0,212,255,0.18)'   },
+      user   : { bg:'rgba(0,212,255,0.06)',   color:'rgba(0,212,255,0.5)', border:'rgba(0,212,255,0.12)' },
     };
-    const rc = roleColors[role.toUpperCase()] ?? roleColors.USER;
-    const roleHTML = `<span class="upm-role" style="background:${rc.bg};color:${rc.color};border-color:${rc.border}">${_esc(role)}</span>`;
+    const UPM_ROLE_LABELS = { owner:'Owner', admin:'Admin', mod:'Mod', tester:'Tester', user:'Player' };
+    const rc  = roleColors[role] ?? roleColors.user;
+    const roleLabel = UPM_ROLE_LABELS[role] ?? role;
+    const roleHTML  = role !== 'user'
+      ? `<span class="upm-role" data-role="${role}" style="background:${rc.bg};color:${rc.color};border-color:${rc.border}">${_esc(roleLabel)}</span>`
+      : '';  // hide plain Player badge — not interesting
 
     // Avatar
     const avatarHTML = photo

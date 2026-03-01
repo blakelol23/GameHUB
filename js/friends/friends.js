@@ -111,32 +111,38 @@ async function _renderTab(tab) {
 
 // ── User-info fetching ─────────────────────────────────────────
 async function _fetchUser(uid) {
-  const [name, color, photo, role] = await Promise.all([
+  const [name, color, photo, roleSnap] = await Promise.all([
     get(ref(db, `users/${uid}/username`)),
     get(ref(db, `users/${uid}/avatarColor`)),
     get(ref(db, `users/${uid}/avatarPhoto`)),
-    get(ref(db, `users/${uid}/role`)),
+    get(ref(db, `roles/${uid}`)),           // authoritative — not writable by users
   ]);
+  const rv   = roleSnap.val();
+  const role = rv
+    ? (typeof rv === 'string' ? rv.toLowerCase() : (rv?.role?.toLowerCase() ?? null))
+    : null;
   return {
     username   : name.val()  ?? 'Unknown',
     avatarColor: color.val() ?? 'cyan',
     avatarPhoto: photo.val() ?? null,
-    role       : role.val()  ?? null,
+    role,
   };
 }
 
 // ── Avatar / badge builders ────────────────────────────────────
+const FR_ROLE_DISPLAY = { owner:'Owner', admin:'Admin', mod:'Mod', tester:'Tester' };
+
+function _roleHTML(role) {
+  if (!role || role === 'user') return '';
+  return `<span class="fr-role" data-role="${role}">${FR_ROLE_DISPLAY[role] ?? role}</span>`;
+}
+
 function _avHTML(letter, color, photo) {
   const hex = _col(color);
   const img = photo
     ? `<img class="fr-av-photo" src="${_esc(photo)}" alt="" loading="lazy">`
     : '';
   return `<div class="fr-av" style="--avc:${hex}">${_esc(String(letter).toUpperCase())}${img}</div>`;
-}
-
-function _roleHTML(role) {
-  if (!role || role === 'USER') return '';
-  return `<span class="fr-role" data-role="${role.toLowerCase()}">${role}</span>`;
 }
 
 // ── Render friends (All / Online) ──────────────────────────────

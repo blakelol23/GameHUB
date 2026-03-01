@@ -64,13 +64,17 @@ async function _lookupUserInfo(uid) {
       get(ref(db, `users/${uid}/username`)),
       get(ref(db, `users/${uid}/avatarColor`)),
       get(ref(db, `users/${uid}/avatarPhoto`)),
-      get(ref(db, `users/${uid}/role`)),
+      get(ref(db, `roles/${uid}`)),           // authoritative — not writable by users
     ]);
+    const rv   = rSnap.val();
+    const role = rv
+      ? (typeof rv === 'string' ? rv.toLowerCase() : (rv?.role?.toLowerCase() ?? null))
+      : null;
     return {
       username   : nSnap.val() ?? 'Unknown',
       avatarColor: cSnap.val() ?? 'cyan',
       avatarPhoto: pSnap.val() ?? null,
-      role       : rSnap.val() ?? null,
+      role,
     };
   } catch (_e) {
     return { username: 'Unknown', avatarColor: 'cyan', avatarPhoto: null, role: null };
@@ -83,10 +87,12 @@ function _avatarInner(letter, photo) {
   return letter;
 }
 
-/** Build a role badge span if the user has a non-USER role. */
+const ROLE_DISPLAY = { owner:'Owner', admin:'Admin', mod:'Mod', tester:'Tester' };
+
+/** Build a role badge span if the user has a non-player role. */
 function _roleBadge(role) {
-  if (!role || role === 'USER') return '';
-  return `<span class="msg-role-badge" data-role="${role.toLowerCase()}">${role}</span>`;
+  if (!role || role === 'user') return '';
+  return `<span class="msg-role-badge" data-role="${role}">${ROLE_DISPLAY[role] ?? role}</span>`;
 }
 
 // ── Lifecycle ───────────────────────────────────────────────────────────────
