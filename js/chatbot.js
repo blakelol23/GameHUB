@@ -14,44 +14,6 @@ const VISION_MODEL  = 'llama-3.3-32b-vision-preview';  // used when an image is 
 const MAX_HIST      = 20; // max message pairs in context
 const MAX_IMG_BYTES = 4 * 1024 * 1024; // 4 MB base64 limit
 
-// ── Tool definitions (Groq function-calling) ─────────────────────
-const TOOLS = [
-  {
-    type: 'function',
-    function: {
-      name       : 'navigate_to_section',
-      description: 'Navigate the GameHUB dashboard to a specific section.',
-      parameters : {
-        type      : 'object',
-        properties: {
-          section: {
-            type       : 'string',
-            enum       : ['overview', 'games', 'profile', 'friends', 'messages', 'settings'],
-            description: 'The section to navigate to'
-          }
-        },
-        required: ['section']
-      }
-    }
-  },
-  {
-    type: 'function',
-    function: {
-      name       : 'add_friend',
-      description: 'Send a friend request to another user by their exact username.',
-      parameters : {
-        type      : 'object',
-        properties: {
-          username: {
-            type       : 'string',
-            description: 'The exact username to send a friend request to'
-          }
-        },
-        required: ['username']
-      }
-    }
-  }
-];
 
 // ── User context (populated on dashboard:user-ready) ─────────────
 let _uid        = null;
@@ -186,11 +148,21 @@ Friends: ${friendsList}
 Recently played games: ${gamesList}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ACTIONS YOU CAN PERFORM (tools — a Yes/No popup is shown to the user automatically)
+ACTIONS — CRITICAL FORMAT RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-You have two callable tools. When you call them the user sees a Yes/No confirmation popup — you do NOT need to ask permission in your text first. Just call the tool directly and optionally include a short accompanying message.
-- navigate_to_section(section): navigate to any of: overview, games, profile, friends, messages, settings
-- add_friend(username): send a friend request to a user by their exact username
+You can trigger two actions by embedding a special tag anywhere in your reply. The tag is invisible to the user — they see a Yes/No popup instead. Do NOT ask for permission in your text; just include the tag and write a normal message.
+
+Navigate to a section:
+  <<ACTION:navigate:SECTION>>
+  SECTION must be exactly one of: overview, games, profile, friends, messages, settings
+  Example reply: "Sure! Sending you to the Game Library now. <<ACTION:navigate:games>>"
+
+Send a friend request:
+  <<ACTION:add_friend:USERNAME>>
+  USERNAME is the exact username typed by the user.
+  Example reply: "On it! <<ACTION:add_friend:blake>>"
+
+NEVER output the tag text literally in your visible message. Only include it when you actually intend to perform the action.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PERSONALITY
@@ -499,8 +471,7 @@ export async function sendMessage(text) {
           model      : modelToUse,
           messages   : messages,
           max_tokens : 1024,
-          temperature: 0.75,
-          ...(modelToUse === MODEL ? { tools: TOOLS, tool_choice: 'auto' } : {})
+          temperature: 0.75
         })
       });
       if (!r.ok) {
@@ -517,25 +488,29 @@ export async function sendMessage(text) {
       return await r.json();
     }
 
-    const data   = await doFetch(model);
-    const choice  = data.choices?.[0];
-    const msg     = choice?.message;
+    const data  = await doFetch(model);
+    let   reply  = data.choices?.[0]?.message?.content?.trim() || '…';
 
-    if (choice?.finish_reason === 'tool_calls' && msg?.tool_calls?.length) {
-      // AI invoked a tool — remove typing indicator and show consent popup
-      if (msg.content?.trim()) {
-        _history.push({ role: 'assistant', content: msg.content.trim() });
-        _appendMessage('assistant', msg.content.trim());
+    // Parse out any embedded action tags before displaying
+    const ACTION_RE = /<<ACTION:(navigate|add_friend):([^>]+)>>/i;
+    const actionMatch = ACTION_RE.exec(reply);
+    // Strip the tag from displayed text (remove the whole tag + any surrounding space)
+    const displayReply = reply.replace(/\s*<<ACTION:[^>]+>>\s*/gi, '').trim() || null;
+
+    // Store the clean reply (no tag) in history
+    const historyReply = displayReply || reply.replace(/<<ACTION:[^>]+>>/gi, '').trim();
+    _history.push({ role: 'assistant', content: historyReply });
+    _removeTyping();
+    if (displayReply) _appendMessage('assistant', displayReply);
+
+    if (actionMatch) {
+      const actionType = actionMatch[1].toLowerCase();
+      const actionVal  = actionMatch[2].trim();
+      if (actionType === 'navigate') {
+        _handleToolCall('navigate_to_section', { section: actionVal });
+      } else if (actionType === 'add_friend') {
+        _handleToolCall('add_friend', { username: actionVal });
       }
-      _removeTyping();
-      const tc   = msg.tool_calls[0];
-      const args = (() => { try { return JSON.parse(tc.function.arguments); } catch { return {}; } })();
-      _handleToolCall(tc.function.name, args);
-    } else {
-      const reply = msg?.content?.trim() || '…';
-      _history.push({ role: 'assistant', content: reply });
-      _removeTyping();
-      _appendMessage('assistant', reply);
     }
 
   } catch (err) {
