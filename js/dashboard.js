@@ -12,7 +12,7 @@
 
 import { auth, db }                                 from './auth.js';
 import { onAuthStateChanged, signOut,
-         updatePassword,
+         updatePassword, deleteUser,
          EmailAuthProvider,
          reauthenticateWithCredential }              from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js';
 import { ref, get, set, update, push, onDisconnect,
@@ -269,18 +269,24 @@ const _ADMIN_USER = 'blake';   // canonical lowercase username of the authorised
 
 let _adminInit = false;
 window.addEventListener('dashboard:user-ready', async ({ detail: { user, profile } }) => {
-  const panelEl = document.getElementById('settings-group-devconsole');
+  const panelEl  = document.getElementById('settings-group-devconsole');
+  const navDevBtn = document.getElementById('settings-nav-developer');
+  const tabDevPanel = document.getElementById('settings-panel-developer');
 
   // Hard gate — identity check against the stored DB username
   const dbUsername = (profile?.username ?? '').toLowerCase();
   if (dbUsername !== _ADMIN_USER) {
     // Ensure the panel stays hidden for every non-authorised user
-    if (panelEl) panelEl.hidden = true;
+    if (panelEl)     panelEl.hidden = true;
+    if (navDevBtn)   navDevBtn.hidden = true;
+    if (tabDevPanel) tabDevPanel.hidden = true;
     return;
   }
 
-  // Authorised — reveal the panel
-  if (panelEl) panelEl.hidden = false;
+  // Authorised — reveal the nav item and panel
+  if (navDevBtn)   navDevBtn.hidden   = false;
+  if (tabDevPanel) tabDevPanel.hidden = false;
+  if (panelEl)     panelEl.hidden     = false;
 
   // Read current role and update badge
   const rs   = await get(ref(db, `roles/${user.uid}`)).catch(() => null);
@@ -403,6 +409,67 @@ function _resetInactivity() {
 ['click', 'keydown', 'mousemove', 'touchstart', 'scroll'].forEach(ev =>
   document.addEventListener(ev, () => { if (_inactivityTimer) _resetInactivity(); }, { passive: true })
 );
+
+// ── Settings tab switching ─────────────────────────────────────────────────────
+(function _initSettingsTabs() {
+  const navItems = document.querySelectorAll('.settings-nav-item[data-stab]');
+  if (!navItems.length) return;
+
+  navItems.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.stab;
+      // Update nav active state
+      navItems.forEach(b => b.classList.toggle('active', b === btn));
+      // Update panel active state
+      document.querySelectorAll('.settings-panel[id^="settings-panel-"]').forEach(panel => {
+        panel.classList.toggle('active', panel.id === `settings-panel-${tab}`);
+      });
+    });
+  });
+})();
+
+// ── Delete account ─────────────────────────────────────────────────────────────
+document.getElementById('btn-delete-account')?.addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const confirmed = window.confirm(
+    'Are you sure you want to permanently delete your account?\n\nThis will remove all your data and cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  const pw = window.prompt('Please enter your password to confirm:');
+  if (!pw) return;
+
+  try {
+    // Re-authenticate before deletion
+    const cred = EmailAuthProvider.credential(user.email, pw);
+    await reauthenticateWithCredential(user, cred);
+
+    const uid = user.uid;
+
+    // Wipe RTDB data
+    await Promise.all([
+      set(ref(db, `users/${uid}`),                null),
+      set(ref(db, `roles/${uid}`),                null),
+      set(ref(db, `presence/${uid}`),             null),
+      set(ref(db, `user_conversations/${uid}`),   null),
+      set(ref(db, `friend_requests/${uid}`),       null),
+      set(ref(db, `friends/${uid}`),               null),
+      set(ref(db, `achievements/${uid}`),          null),
+      set(ref(db, `notifications/${uid}`),         null),
+    ]);
+
+    // Remove Firebase Auth account
+    await deleteUser(user);
+  } catch (err) {
+    if (err?.code === 'auth/wrong-password') {
+      alert('Incorrect password. Account not deleted.');
+    } else {
+      alert(`Could not delete account: ${err?.message ?? 'Unknown error'}`);
+    }
+  }
+});
 
 // ── Auth guard ─────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {

@@ -1,0 +1,127 @@
+/* css/dashboard/achievements.css
+   Achievement badge grid — displayed on the Profile page
+   ─────────────────────────────────────────────────────── */
+
+/* ── Section wrapper ─────────────────────────────────────────── */
+.ach-section {
+  margin-top: 12px;
+}
+
+.ach-section-head {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  margin-bottom  : 12px;
+}
+
+.ach-count-pill {
+  font-size   : 10px;
+  font-family : var(--font-mono);
+  color       : var(--dash-text-faint);
+  background  : var(--dash-surface3);
+  border      : 1px solid var(--dash-border);
+  border-radius: 99px;
+  padding     : 2px 10px;
+  letter-spacing: .06em;
+}
+
+/* ── Badge grid ──────────────────────────────────────────────── */
+.ach-grid {
+  display              : grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap                  : 8px;
+}
+
+/* ── Individual badge ────────────────────────────────────────── */
+.ach-badge {
+  position       : relative;
+  background     : var(--dash-surface2);
+  border         : 1px solid var(--dash-border2);
+  border-radius  : 10px;
+  padding        : 14px 8px 12px;
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  gap            : 4px;
+  text-align     : center;
+  cursor         : default;
+  transition     : border-color .18s, box-shadow .18s, transform .18s;
+  user-select    : none;
+}
+
+.ach-badge--earned {
+  border-color: var(--dash-border);
+}
+
+.ach-badge--earned:hover {
+  border-color: var(--dash-accent);
+  box-shadow  : 0 0 16px rgba(0,0,0,.3), 0 0 0 1px rgba(var(--accent-rgb,0,212,255),.12);
+  transform   : translateY(-2px);
+}
+
+/* Rare badge glow */
+.ach-badge--rare.ach-badge--earned {
+  border-color: rgba(245,166,35,.35);
+}
+.ach-badge--rare.ach-badge--earned:hover {
+  border-color: rgba(245,166,35,.65);
+  box-shadow  : 0 0 18px rgba(245,166,35,.18);
+}
+
+/* Locked state */
+.ach-badge--locked {
+  opacity: .32;
+  filter : grayscale(1);
+}
+.ach-badge--locked:hover {
+  opacity  : .45;
+  transform: none;
+}
+
+/* ── Parts ───────────────────────────────────────────────────── */
+.ach-badge-icon {
+  font-size  : 1.65rem;
+  line-height: 1;
+  display    : block;
+  margin-bottom: 2px;
+}
+
+.ach-badge-name {
+  font-size     : 10px;
+  font-weight   : 700;
+  color         : var(--dash-text);
+  letter-spacing: .035em;
+  line-height   : 1.35;
+}
+
+.ach-badge-date {
+  font-size  : 8.5px;
+  color      : var(--dash-text-faint);
+  font-family: var(--font-mono);
+  letter-spacing: .04em;
+}
+
+/* RARE label pip */
+.ach-badge-rare-pip {
+  position     : absolute;
+  top          : 5px;
+  right        : 7px;
+  font-size    : 6.5px;
+  font-weight  : 800;
+  letter-spacing: .12em;
+  color        : #f5a623;
+  text-transform: uppercase;
+}
+
+/* ── Achievement unlock toast variant ───────────────────────── */
+.toast--achievement {
+  border-left-color: #f5a623;
+  background: linear-gradient(
+    135deg,
+    rgba(245,166,35,.08) 0%,
+    var(--dash-surface2, #1c2035) 60%
+  );
+}
+.toast--achievement .toast-title {
+  color: #f5a623;
+}

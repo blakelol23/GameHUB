@@ -1,11 +1,11 @@
 /**
- * js/messages/messages.js
+ * js/messages/messages.js  v2
  * Direct-message system — Firebase Realtime Database.
  *
  * Data model:
  *   /conversations/{convId}/messages/{msgId} — { from, text, ts }
  *   /user_conversations/{uid}/{convId}        — { peerUid, peerName, avatarColor, lastMsg, lastTs }
- *   /presence/{uid}                           — { status:'online'|'offline', ts, uid }
+ *   /presence/{uid}                           — { status:'online'|'offline'|'dnd'|'away', ts, uid }
  *   Conversation IDs: [uidA, uidB].sort().join('_')
  */
 
@@ -28,18 +28,26 @@ const newMsgBtn  = document.getElementById('msg-new-btn');
 let _uid            = null;
 let _activeConvId   = null;
 let _activeConvMeta = null;
-let _unsubFeed      = null;   // onChildAdded unsub — active messages
-let _unsubConvList  = null;   // onValue unsub — conversation list
-let _unsubPresence  = null;   // onValue unsub — active peer presence
-let _unsubTyping    = null;   // onValue unsub — typing indicator
-let _typingTimer    = null;   // debounce to clear /typing entry
-let _lastSender     = null;   // track grouping in feed
+let _unsubFeed      = null;
+let _unsubConvList  = null;
+let _unsubPresence  = null;
+let _unsubTyping    = null;
+let _typingTimer    = null;
+let _lastSender     = null;   // bubble grouping
+let _lastMsgDate    = null;   // date separator tracking (YYYY-MM-DD string)
+let _msgCount       = 0;      // messages sent this session (for achievements)
+let _emojiPickerEl  = null;   // floating emoji picker element
 
 // ── Helpers ───────────────────────────────────────────────────────
 const COLOR_MAP = {
   cyan  : '#00d4ff', purple: '#a855f7', green: '#44dd88',
   gold  : '#f5a623', red   : '#ff4d6a', white: '#e8ecf8',
 };
+
+const EMOJI_LIST = [
+  '😀','😂','😎','😭','🤔','😍','👍','🙏',
+  '❤️','🔥','✨','🎉','💯','🚀','🎮','💀',
+];
 
 function convId(a, b) { return [a, b].sort().join('_'); }
 
@@ -51,20 +59,34 @@ function timeAgo(ts) {
   return new Date(ts).toLocaleDateString();
 }
 
+function _dateLabel(ts) {
+  const d   = new Date(ts);
+  const now = new Date();
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === now.toDateString())       return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+}
+
+function _dateKey(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
 function _esc(s) {
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/** Fetch username, avatarColor, avatarPhoto and role — all public sub-fields. */
+/** Fetch username, avatarColor, avatarPhoto and role. */
 async function _lookupUserInfo(uid) {
   try {
     const [nSnap, cSnap, pSnap, rSnap] = await Promise.all([
       get(ref(db, `users/${uid}/username`)),
       get(ref(db, `users/${uid}/avatarColor`)),
       get(ref(db, `users/${uid}/avatarPhoto`)),
-      get(ref(db, `roles/${uid}`)),           // authoritative — not writable by users
+      get(ref(db, `roles/${uid}`)),
     ]);
     const rv   = rSnap.val();
     const role = rv
@@ -81,7 +103,6 @@ async function _lookupUserInfo(uid) {
   }
 }
 
-/** Render the inner HTML of an avatar element, injecting photo if available. */
 function _avatarInner(letter, photo) {
   if (photo) return `<img class="msg-av-photo" src="${_esc(photo)}" alt="" />`;
   return letter;
@@ -89,13 +110,24 @@ function _avatarInner(letter, photo) {
 
 const ROLE_DISPLAY = { owner:'Owner', admin:'Admin', mod:'Mod', tester:'Tester' };
 
-/** Build a role badge span if the user has a non-player role. */
 function _roleBadge(role) {
   if (!role || role === 'user') return '';
   return `<span class="msg-role-badge" data-role="${role}">${ROLE_DISPLAY[role] ?? role}</span>`;
 }
 
-// ── Lifecycle ───────────────────────────────────────────────────────────────
+// ── Unread badge helpers (localStorage-backed) ────────────────────
+function _markSeen(cid) {
+  try { localStorage.setItem(`msg_seen_${cid}`, String(Date.now())); } catch(_) {}
+}
+function _seenTs(cid) {
+  try { return parseInt(localStorage.getItem(`msg_seen_${cid}`) ?? '0', 10); } catch(_) { return 0; }
+}
+function _isUnread(entry) {
+  if (!entry.lastTs) return false;
+  return entry.lastTs > _seenTs(entry.convId);
+}
+
+// ── Lifecycle ──────────────────────────────────────────────────────
 window.addEventListener('dashboard:user-ready', ({ detail: { user } }) => {
   _uid = user.uid;
   _startConvListListener();
@@ -103,14 +135,13 @@ window.addEventListener('dashboard:user-ready', ({ detail: { user } }) => {
   _bindSearch();
   _bindNewMessage();
   _bindBackBtn();
+  _bindEmojiPicker();
 });
 
-// Refresh the conv list with live data every time the Messages tab is opened
 window.addEventListener('dashboard:section', ({ detail: { name } }) => {
   if (name === 'messages' && _uid) _refreshConvList();
 });
 
-// Clean up on sign-out so stale subscriptions don't fire for the next user
 window.addEventListener('dashboard:logout', () => {
   _unsubConvList?.(); _unsubConvList = null;
   _unsubFeed?.();     _unsubFeed     = null;
@@ -118,7 +149,9 @@ window.addEventListener('dashboard:logout', () => {
   _unsubTyping?.();   _unsubTyping   = null;
   clearTimeout(_typingTimer);
   _uid = _activeConvId = _activeConvMeta = null;
-  _lastSender = null;
+  _lastSender = _lastMsgDate = null;
+  _msgCount   = 0;
+  _emojiPickerEl?.remove(); _emojiPickerEl = null;
   if (convList)   convList.innerHTML   = '';
   if (chatFeed)   chatFeed.innerHTML   = '';
   if (chatHeader) chatHeader.innerHTML = '<span class="msg-chat-header-name">Select a conversation</span>';
@@ -126,7 +159,6 @@ window.addEventListener('dashboard:logout', () => {
   if (msgSendBtn) msgSendBtn.disabled = true;
 });
 
-// Open a DM from the Friends tab
 window.addEventListener('messages:open', async ({ detail: { peerUid, peerName } }) => {
   if (!_uid) return;
   const cid       = convId(_uid, peerUid);
@@ -145,7 +177,8 @@ window.addEventListener('messages:open', async ({ detail: { peerUid, peerName } 
   ]);
   _openConversation(cid, peerUid, resolvedName);
 });
-// ── Live conversation list (real-time) ───────────────────────────
+
+// ── Live conversation list ─────────────────────────────────────────
 function _startConvListListener() {
   _unsubConvList?.();
   _unsubConvList = onValue(ref(db, `user_conversations/${_uid}`), snap => {
@@ -153,11 +186,6 @@ function _startConvListListener() {
   });
 }
 
-/**
- * Force a fresh render of the conversation list from the DB.
- * Called every time the Messages tab is opened so names/photos
- * are always up-to-date regardless of whether user_conversations changed.
- */
 async function _refreshConvList() {
   if (!_uid) return;
   try {
@@ -174,7 +202,6 @@ async function _renderConvList(snap) {
   entries.sort((a, b) => (b.lastTs || 0) - (a.lastTs || 0));
   if (!entries.length) { _showEmptyConvList(); return; }
 
-  // Fetch latest peer info + presence in parallel for every conversation
   const presMap     = {};
   const peerInfoMap = {};
   await Promise.all(entries.map(async e => {
@@ -198,11 +225,13 @@ async function _renderConvList(snap) {
     const online      = pres.online ?? false;
     const game        = pres.game   ?? null;
     const letter      = (displayName || '?')[0].toUpperCase();
+    const unread      = e.convId !== _activeConvId && _isUnread(e);
     const preview     = game
       ? `<span class="msg-conv-preview msg-conv-preview--game">🎮 ${_esc(game.title)}</span>`
       : `<span class="msg-conv-preview">${_esc(e.lastMsg ?? '')}</span>`;
+    const unreadBadge = unread ? `<span class="msg-unread-badge">●</span>` : '';
     return `
-      <button class="msg-conv-item${e.convId === _activeConvId ? ' active' : ''}"
+      <button class="msg-conv-item${e.convId === _activeConvId ? ' active' : ''}${unread ? ' unread' : ''}"
               data-conv-id="${e.convId}"
               data-peer-uid="${e.peerUid ?? ''}"
               data-peer-name="${_esc(displayName)}"
@@ -215,7 +244,10 @@ async function _renderConvList(snap) {
           <span class="msg-conv-name">${_esc(displayName)}${_roleBadge(pi.role)}</span>
           ${preview}
         </div>
-        <span class="msg-conv-time">${e.lastTs ? timeAgo(e.lastTs) : ''}</span>
+        <div class="msg-conv-meta">
+          <span class="msg-conv-time">${e.lastTs ? timeAgo(e.lastTs) : ''}</span>
+          ${unreadBadge}
+        </div>
       </button>`;
   }).join('');
 
@@ -228,29 +260,39 @@ async function _renderConvList(snap) {
 function _showEmptyConvList() {
   if (!convList) return;
   convList.innerHTML = `
-    <div class="empty-state" style="padding:40px 16px">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <p class="empty-state-title">No conversations</p>
-      <p class="empty-state-sub">Find a friend in the Friends tab and start messaging.</p>
+    <div class="msg-conv-empty">
+      <svg width="28" height="28" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <p style="margin:0;font-weight:700;color:var(--dash-text-dim)">No conversations</p>
+      <p style="margin:0">Find a friend and start messaging.</p>
     </div>`;
 }
 
-// ── Open a conversation ───────────────────────────────────────────
+// ── Open a conversation ────────────────────────────────────────────
 async function _openConversation(cid, peerUid, peerNameHint) {
   _activeConvId   = cid;
   _activeConvMeta = { peerUid };
   _unsubFeed?.();     _unsubFeed     = null;
   _unsubPresence?.(); _unsubPresence = null;
+  _lastSender  = null;
+  _lastMsgDate = null;
 
-  // Highlight active item
-  document.querySelectorAll('.msg-conv-item').forEach(b =>
-    b.classList.toggle('active', b.dataset.convId === cid));
+  // Mark this conversation as seen → clear unread badge
+  _markSeen(cid);
+
+  // Highlight active item and remove unread classes
+  document.querySelectorAll('.msg-conv-item').forEach(b => {
+    const isActive = b.dataset.convId === cid;
+    b.classList.toggle('active', isActive);
+    if (isActive) {
+      b.classList.remove('unread');
+      b.querySelector('.msg-unread-badge')?.remove();
+    }
+  });
 
   // Mobile: show chat pane
   document.querySelector('.messages-layout')?.classList.add('conv-open');
   document.dispatchEvent(new CustomEvent('messages:conv-opened'));
 
-  // Resolve latest peer info fresh from DB
   let peerName  = peerNameHint || 'User';
   let peerColor = 'cyan';
   let peerPhoto = null;
@@ -266,8 +308,9 @@ async function _openConversation(cid, peerUid, peerNameHint) {
   const col = COLOR_MAP[peerColor] ?? COLOR_MAP.cyan;
 
   if (chatHeader) {
-    const backBtn = chatHeader.querySelector('.msg-back-btn');
+    const backBtnOld = chatHeader.querySelector('.msg-back-btn');
     chatHeader.innerHTML = `
+      ${backBtnOld ? backBtnOld.outerHTML : '<button class="msg-back-btn" id="msg-back-btn" title="Back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>'}
       <div class="msg-chat-avatar-wrap" style="cursor:pointer" onclick="window.openUserProfile?.('${peerUid}')">
         <div class="msg-chat-avatar" style="--av-col:${col}">${_avatarInner(peerName[0].toUpperCase(), peerPhoto)}</div>
         <span class="msg-presence-dot" id="msg-header-presence-dot"></span>
@@ -276,44 +319,38 @@ async function _openConversation(cid, peerUid, peerNameHint) {
         <div class="msg-chat-name">${_esc(peerName)}${_roleBadge(peerRole)}</div>
         <div class="msg-chat-status" id="msg-chat-status">…</div>
       </div>`;
-    if (backBtn) chatHeader.prepend(backBtn);
+    // Re-bind back button (just replaced in HTML)
+    chatHeader.querySelector('.msg-back-btn')?.addEventListener('click', () =>
+      document.querySelector('.messages-layout')?.classList.remove('conv-open'));
   }
 
-  if (chatFeed)   chatFeed.innerHTML = '';
-  _lastSender = null;  // reset grouping
+  if (chatFeed) chatFeed.innerHTML = '';
   if (msgInput)   { msgInput.disabled = false; msgInput.placeholder = `Message ${peerName}…`; }
   if (msgSendBtn) msgSendBtn.disabled = false;
 
-  // Live presence for this conversation
+  // Live presence
   _unsubPresence = onValue(ref(db, `presence/${peerUid}`), snap => {
     const presStatus = snap.val()?.status;
-    const game     = snap.val()?.game ?? null;
-    const online   = presStatus === 'online';
-    const isDND    = presStatus === 'dnd';
-    const isAway   = presStatus === 'away';
-    const dot      = document.getElementById('msg-header-presence-dot');
-    const statusEl = document.getElementById('msg-chat-status');
-    const label    = game
+    const game  = snap.val()?.game ?? null;
+    const online = presStatus === 'online';
+    const isDND  = presStatus === 'dnd';
+    const isAway = presStatus === 'away';
+    const dot    = document.getElementById('msg-header-presence-dot');
+    const stEl   = document.getElementById('msg-chat-status');
+    const label  = game
       ? `🎮 Playing ${game.title}`
       : isDND ? '⛔ Do Not Disturb'
       : isAway ? '🌙 Away'
-      : online ? 'Online'
-      : 'Offline';
-    if (dot)      dot.className       = `msg-presence-dot${online ? ' msg-presence-dot--on' : isDND ? ' msg-presence-dot--dnd' : isAway ? ' msg-presence-dot--away' : ''}`;
-    if (statusEl) {
-      statusEl.textContent = label;
-      statusEl.dataset.lastStatus = label;  // save for typing indicator restore
-    }
-    // Mirror into the conv list row
+      : online ? 'Online' : 'Offline';
+    if (dot)  dot.className = `msg-presence-dot${online ? ' msg-presence-dot--on' : isDND ? ' msg-presence-dot--dnd' : isAway ? ' msg-presence-dot--away' : ''}`;
+    if (stEl) { stEl.textContent = label; stEl.dataset.lastStatus = label; }
     const listDot = convList?.querySelector(`[data-conv-id="${cid}"] .msg-presence-dot`);
     if (listDot) listDot.className = `msg-presence-dot${online ? ' msg-presence-dot--on' : ''}`;
   });
 
-  // Typing indicator
   _unsubTyping?.(); _unsubTyping = null;
   _startTypingSubscriber(cid, peerUid);
 
-  // Real-time messages feed
   const msgsRef = query(
     ref(db, `conversations/${cid}/messages`),
     orderByChild('ts'),
@@ -327,13 +364,28 @@ async function _openConversation(cid, peerUid, peerNameHint) {
   });
 }
 
+// ── Append a message with date separator + grouping ───────────────
 function _appendMessage(msg, msgId) {
   if (!chatFeed) return;
-  const isSelf     = msg.from === _uid;
-  const continued  = _lastSender === msg.from;
-  _lastSender      = msg.from;
 
-  // Fetch sender name async for incoming messages (skip for self)
+  const isSelf    = msg.from === _uid;
+  const ts        = msg.ts ?? Date.now();
+  const dk        = _dateKey(ts);
+
+  // Date separator
+  if (dk !== _lastMsgDate) {
+    _lastMsgDate = dk;
+    const sep = document.createElement('div');
+    sep.className = 'msg-date-sep';
+    sep.setAttribute('aria-label', _dateLabel(ts));
+    sep.textContent = _dateLabel(ts);
+    chatFeed.appendChild(sep);
+    _lastSender = null; // reset grouping after separator
+  }
+
+  const continued = _lastSender === msg.from;
+  _lastSender     = msg.from;
+
   const row = document.createElement('div');
   row.className = `msg-row${isSelf ? ' msg-row--self' : ''}${continued ? ' msg-row--continued' : ''}`;
   row.dataset.msgId   = msgId ?? '';
@@ -351,16 +403,14 @@ function _appendMessage(msg, msgId) {
              data-msg-text="${_esc(msg.text ?? '')}"
              data-conv-id="${_esc(_activeConvId ?? '')}">
           <span class="msg-bubble-text">${_esc(msg.text)}</span>
-          <span class="msg-bubble-ts">${msg.ts ? timeAgo(msg.ts) : ''}</span>
+          <span class="msg-bubble-ts">${timeAgo(ts)}</span>
         </div>
       </div>`;
   } else {
-    // Placeholder avatar then fill async
     const senderId = msg.from;
-    const letter   = '?';
     row.innerHTML = `
-      <div class="msg-row-av-wrap${continued ? ' msg-row-av-wrap--hidden' : ''}">
-        <div class="msg-row-av" data-sender-av="${_esc(senderId)}" style="cursor:pointer">${letter}</div>
+      <div class="msg-row-av-wrap">
+        <div class="msg-row-av" data-sender-av="${_esc(senderId)}" style="cursor:pointer">?</div>
       </div>
       <div class="msg-row-content">
         ${!continued ? `<span class="msg-row-name" data-sender-name="${_esc(senderId)}">…</span>` : ''}
@@ -371,10 +421,9 @@ function _appendMessage(msg, msgId) {
              data-msg-text="${_esc(msg.text ?? '')}"
              data-conv-id="${_esc(_activeConvId ?? '')}">
           <span class="msg-bubble-text">${_esc(msg.text)}</span>
-          <span class="msg-bubble-ts">${msg.ts ? timeAgo(msg.ts) : ''}</span>
+          <span class="msg-bubble-ts">${timeAgo(ts)}</span>
         </div>
       </div>`;
-    // Fill name + avatar async
     _lookupUserInfo(senderId).then(info => {
       const avEl   = row.querySelector(`[data-sender-av="${senderId}"]`);
       const nameEl = row.querySelector(`[data-sender-name="${senderId}"]`);
@@ -384,9 +433,7 @@ function _appendMessage(msg, msgId) {
         avEl.innerHTML = _avatarInner(info.username[0]?.toUpperCase() ?? '?', info.avatarPhoto);
         avEl.addEventListener('click', () => window.openUserProfile?.(senderId));
       }
-      if (nameEl) {
-        nameEl.innerHTML = _esc(info.username) + _roleBadge(info.role);
-      }
+      if (nameEl) nameEl.innerHTML = _esc(info.username) + _roleBadge(info.role);
     }).catch(() => {});
   }
 
@@ -394,24 +441,21 @@ function _appendMessage(msg, msgId) {
   chatFeed.scrollTop = chatFeed.scrollHeight;
 }
 
-// ── Typing indicator ───────────────────────────────────────────
+// ── Typing indicator ───────────────────────────────────────────────
 function _startTypingSubscriber(cid, peerUid) {
   if (!cid) return;
   _unsubTyping = onValue(ref(db, `typing/${cid}`), snap => {
-    const data   = snap.val() ?? {};
-    const isTyping = Object.entries(data).some(([uid, v]) => {
-      return uid !== _uid && v?.ts && (Date.now() - v.ts < 6000);
-    });
-    const statusEl = document.getElementById('msg-chat-status');
-    if (!statusEl) return;
+    const data     = snap.val() ?? {};
+    const isTyping = Object.entries(data).some(([uid, v]) =>
+      uid !== _uid && v?.ts && (Date.now() - v.ts < 6000));
+    const stEl = document.getElementById('msg-chat-status');
+    if (!stEl) return;
     if (isTyping) {
-      statusEl.textContent = 'typing…';
-      statusEl.classList.add('msg-status--typing');
+      stEl.textContent = 'typing…';
+      stEl.classList.add('msg-status--typing');
     } else {
-      statusEl.classList.remove('msg-status--typing');
-      // Restore presence label
-      const presSnap = statusEl.dataset.lastStatus;
-      statusEl.textContent = presSnap ?? '';
+      stEl.classList.remove('msg-status--typing');
+      stEl.textContent = stEl.dataset.lastStatus ?? '';
     }
   });
 }
@@ -430,18 +474,17 @@ function _clearTyping() {
   set(ref(db, `typing/${_activeConvId}/${_uid}`), null).catch(() => {});
 }
 
-// ── Context menu handlers (called by context-menu.js) ─────────
-window._ctxDeleteMsg = async (convId, msgId) => {
-  if (!convId || !msgId) return;
+// ── Context menu handlers ──────────────────────────────────────────
+window._ctxDeleteMsg = async (cId, msgId) => {
+  if (!cId || !msgId) return;
   try {
-    await set(ref(db, `conversations/${convId}/messages/${msgId}`), null);
+    await set(ref(db, `conversations/${cId}/messages/${msgId}`), null);
     document.querySelector(`[data-msg-id="${msgId}"]`)?.closest('.msg-row')?.remove();
   } catch (e) { console.error('[messages] delete failed', e); }
 };
 
-window._ctxReportMsg = (convId, msgId, fromUid) => {
-  // Stub — push to a /reports node or show a toast
-  console.warn('[messages] report:', { convId, msgId, fromUid });
+window._ctxReportMsg = (cId, msgId, fromUid) => {
+  console.warn('[messages] report:', { cId, msgId, fromUid });
 };
 
 window._ctxOpenConv = (el) => {
@@ -450,7 +493,7 @@ window._ctxOpenConv = (el) => {
   if (uid) _openConversation(convId(_uid, uid), uid, name);
 };
 
-// ── Send message ───────────────────────────────────────────────
+// ── Send message ───────────────────────────────────────────────────
 function _bindSend() {
   async function send() {
     if (!_activeConvId || !_uid) return;
@@ -463,28 +506,78 @@ function _bindSend() {
     try {
       _clearTyping();
       await push(ref(db, `conversations/${_activeConvId}/messages`), msg);
-      // Update index for both participants
       const meta = { lastMsg: text.slice(0,80), lastTs: now };
       const peer = _activeConvMeta?.peerUid;
       if (peer) {
-          await Promise.all([
+        await Promise.all([
           update(ref(db, `user_conversations/${_uid}/${_activeConvId}`), meta),
           update(ref(db, `user_conversations/${peer}/${_activeConvId}`), meta),
         ]);
       }
-    } catch(_e){ _appendError('Failed to send.'); }
+      // Achievements
+      _msgCount++;
+      window.checkAchievement?.('first_message');
+      if (_msgCount >= 50) window.checkAchievement?.('fifty_messages');
+    } catch (_e) { _appendError('Failed to send.'); }
   }
 
   if (msgSendBtn) msgSendBtn.addEventListener('click', send);
-  if (msgInput)   msgInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  });
-  if (msgInput)   msgInput.addEventListener('input', () => {
-    if (msgInput.value.trim()) _writeTyping();
+  if (msgInput) {
+    msgInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+    msgInput.addEventListener('input', () => {
+      if (msgInput.value.trim()) _writeTyping();
+    });
+  }
+}
+
+// ── Emoji picker ───────────────────────────────────────────────────
+function _bindEmojiPicker() {
+  const emojiBtn = document.getElementById('msg-emoji-btn');
+  if (!emojiBtn || !msgInput) return;
+
+  function _createPicker() {
+    const el = document.createElement('div');
+    el.className = 'msg-emoji-picker';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Emoji picker');
+    el.innerHTML = EMOJI_LIST.map(em =>
+      `<button type="button" class="msg-emoji-opt" data-em="${em}" title="${em}">${em}</button>`
+    ).join('');
+    el.querySelectorAll('.msg-emoji-opt').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const pos = msgInput.selectionStart ?? msgInput.value.length;
+        const val = msgInput.value;
+        msgInput.value = val.slice(0, pos) + btn.dataset.em + val.slice(pos);
+        msgInput.focus();
+        const newPos = pos + btn.dataset.em.length;
+        msgInput.setSelectionRange(newPos, newPos);
+        _closePicker();
+      });
+    });
+    return el;
+  }
+
+  function _closePicker() {
+    _emojiPickerEl?.remove();
+    _emojiPickerEl = null;
+    document.removeEventListener('click', _closePicker, true);
+  }
+
+  emojiBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (_emojiPickerEl) { _closePicker(); return; }
+    _emojiPickerEl = _createPicker();
+    const bar = emojiBtn.closest('.msg-input-bar') ?? document.body;
+    bar.style.position = bar.style.position || 'relative';
+    bar.appendChild(_emojiPickerEl);
+    setTimeout(() => document.addEventListener('click', _closePicker, true), 0);
   });
 }
 
-// ── Search conversations ───────────────────────────────────────
+// ── Search conversations ───────────────────────────────────────────
 function _bindSearch() {
   if (!msgSearch) return;
   msgSearch.addEventListener('input', () => {
@@ -496,12 +589,11 @@ function _bindSearch() {
   });
 }
 
-// ── New message (start conversation from inline search) ───────
+// ── New message (inline search) ────────────────────────────────────
 function _bindNewMessage() {
   const newRow    = document.getElementById('msg-new-row');
   const newInput  = document.getElementById('msg-new-input');
   const cancelBtn = document.getElementById('msg-new-cancel');
-
   if (!newMsgBtn) return;
 
   newMsgBtn.addEventListener('click', () => {
@@ -509,7 +601,6 @@ function _bindNewMessage() {
     newRow.hidden = false;
     newInput?.focus();
   });
-
   cancelBtn?.addEventListener('click', () => {
     if (newRow) newRow.hidden = true;
     if (newInput) newInput.value = '';
@@ -524,15 +615,12 @@ function _bindNewMessage() {
       const snap = await get(ref(db, `usernames/${target}`));
       if (!snap.exists()) {
         newInput.style.borderColor = 'rgba(255,77,106,0.5)';
-        newInput.disabled = false;
-        newInput.select();
-        return;
+        newInput.disabled = false; newInput.select(); return;
       }
       const peerUid = snap.val();
       if (peerUid === _uid) {
         newInput.style.borderColor = 'rgba(255,77,106,0.5)';
-        newInput.disabled = false;
-        return;
+        newInput.disabled = false; return;
       }
       const myInfo    = await _lookupUserInfo(_uid);
       const theirInfo = await _lookupUserInfo(peerUid);
@@ -544,15 +632,12 @@ function _bindNewMessage() {
         update(ref(db, `user_conversations/${peerUid}/${cid}`),
           { peerUid: _uid, peerName: myInfo.username, avatarColor: myInfo.avatarColor, lastTs: Date.now() }),
       ]);
-      newInput.value = '';
-      newInput.style.borderColor = '';
+      newInput.value = ''; newInput.style.borderColor = '';
       if (newRow) newRow.hidden = true;
       _openConversation(cid, peerUid, peerName);
-    } catch(_e) {
+    } catch (_e) {
       newInput.style.borderColor = 'rgba(255,77,106,0.5)';
-    } finally {
-      newInput.disabled = false;
-    }
+    } finally { newInput.disabled = false; }
   });
 
   newInput?.addEventListener('input', () => {
@@ -567,17 +652,10 @@ function _appendError(txt) {
   chatFeed.appendChild(d);
 }
 
-// ── Mobile back button ─────────────────────────────────────────
+// ── Mobile back button ─────────────────────────────────────────────
 function _bindBackBtn() {
   const backBtn = document.getElementById('msg-back-btn');
   if (!backBtn) return;
-  // Show back button on narrow layouts
-  const updateBackBtn = () => {
-    const isMobile = window.innerWidth < 700;
-    backBtn.hidden = !isMobile;
-  };
-  window.addEventListener('resize', updateBackBtn);
-  updateBackBtn();
   backBtn.addEventListener('click', () =>
     document.querySelector('.messages-layout')?.classList.remove('conv-open'));
 }

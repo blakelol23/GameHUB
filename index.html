@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="css/dashboard/profile-modal.css" />
   <link rel="stylesheet" href="css/dashboard/game-viewer.css" />
   <link rel="stylesheet" href="css/dashboard/chatbot.css" />
+  <link rel="stylesheet" href="css/dashboard/achievements.css" />
   <!-- Responsive adaptive layout -->
   <link rel="stylesheet" href="css/responsive.css" />
 </head>
@@ -509,7 +510,7 @@
         </div>
         <div class="dash-topbar-right">
           <!-- Notification bell -->
-          <button id="notif-bell-btn" class="notif-bell-btn" aria-label="Notifications" title="Notifications">🔔<span id="notif-bell-badge" class="notif-bell-badge" hidden>0</span></button>
+          <button id="notif-bell-btn" class="notif-bell-btn" aria-label="Notifications" title="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notif-bell-badge" class="notif-bell-badge" hidden>0</span></button>
           <div class="dash-status-dot" title="Connected" aria-label="Online"></div>
           <div class="dash-user-badge">
             <span class="dash-user-badge-label">Operator:</span>
@@ -530,9 +531,18 @@
       <div id="notif-panel" class="notif-panel" hidden>
         <div class="notif-panel-header">
           <span class="notif-panel-title">Notifications</span>
-          <button id="notif-clear-btn">Clear all</button>
+          <div style="display:flex;gap:6px">
+            <button id="notif-read-all-btn" class="notif-panel-btn">Mark read</button>
+            <button id="notif-clear-btn" class="notif-panel-btn">Clear all</button>
+          </div>
         </div>
-        <div id="notif-panel-list" class="notif-panel-list"></div>
+        <div class="notif-panel-tabs" role="tablist">
+          <button class="notif-tab active" data-filter="all" role="tab">All</button>
+          <button class="notif-tab" data-filter="unread" role="tab">Unread</button>
+          <button class="notif-tab" data-filter="social" role="tab">Social</button>
+          <button class="notif-tab" data-filter="system" role="tab">System</button>
+        </div>
+        <div id="notif-panel-list" class="notif-panel-list" role="list"></div>
       </div>
 
       <!-- Scrollable content -->
@@ -818,6 +828,18 @@
 
           </div>
 
+          <!-- Achievements -->
+          <div class="dash-card ach-section" style="margin-top:16px">
+            <div class="section-head" style="margin-bottom:14px">
+              <div class="section-head-row">
+                <span class="section-head-prefix">//</span>
+                <span class="section-head-title" style="font-size:13px">Achievements</span>
+                <span class="ach-count-badge" id="ach-count">0 / 12</span>
+              </div>
+            </div>
+            <div class="ach-grid" id="ach-grid" role="list" aria-label="Achievements"></div>
+          </div>
+
         </section><!-- /section-profile -->
 
         <!-- ══════ FRIENDS ══════ -->
@@ -932,7 +954,8 @@
                   <p>Open a conversation to start chatting</p>
                 </div>
               </div>
-              <div class="msg-input-bar" id="msg-input-bar">
+              <div class="msg-input-bar" id="msg-input-bar" style="position:relative">
+                <button class="msg-emoji-btn" id="msg-emoji-btn" type="button" title="Emoji" aria-label="Emoji picker">😊</button>
                 <input type="text" class="msg-input" id="msg-input"
                        placeholder="Type a message…" maxlength="2000"
                        autocomplete="off" aria-label="Message input" disabled />
@@ -956,9 +979,41 @@
             </div>
           </div>
 
-          <div class="settings-layout">
+          <div class="settings-shell">
 
-            <!-- Appearance -->
+            <!-- Sidebar nav -->
+            <nav class="settings-nav" aria-label="Settings navigation">
+              <button class="settings-nav-item active" data-stab="appearance">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+                <span>Appearance</span>
+              </button>
+              <button class="settings-nav-item" data-stab="account">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                <span>Account</span>
+              </button>
+              <button class="settings-nav-item" data-stab="security">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Security</span>
+              </button>
+              <button class="settings-nav-item" data-stab="notifications">
+                <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span>Notifications</span>
+              </button>
+              <button class="settings-nav-item settings-nav-item--danger" data-stab="danger">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Danger</span>
+              </button>
+              <button class="settings-nav-item" data-stab="developer" id="settings-nav-developer" hidden>
+                <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>Developer</span>
+              </button>
+            </nav>
+
+            <!-- Panels -->
+            <div class="settings-panels">
+
+              <!-- Appearance panel -->
+              <div class="settings-panel active" id="settings-panel-appearance">
             <div class="settings-group">
               <div class="settings-group-header">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
@@ -990,7 +1045,10 @@
               </div>
             </div>
 
-            <!-- Account info (read-only) -->
+              </div><!-- /settings-panel-appearance -->
+
+              <!-- Account panel -->
+              <div class="settings-panel" id="settings-panel-account">
             <div class="settings-group">
               <div class="settings-group-header">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -1012,7 +1070,10 @@
               </div>
             </div>
 
-            <!-- Notifications -->
+              </div><!-- /settings-panel-account -->
+
+              <!-- Notifications panel -->
+              <div class="settings-panel" id="settings-panel-notifications">
             <div class="settings-group">
               <div class="settings-group-header">
                 <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1042,7 +1103,10 @@
               </div>
             </div>
 
-            <!-- Change password -->
+              </div><!-- /settings-panel-notifications -->
+
+              <!-- Security panel -->
+              <div class="settings-panel" id="settings-panel-security">
             <div class="settings-group">
               <div class="settings-group-header">
                 <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1072,8 +1136,11 @@
               </div>
             </div>
 
-            <!-- Developer Console — hidden; revealed only for authorised account -->
-            <div class="settings-group" id="settings-group-devconsole" hidden>
+              </div><!-- /settings-panel-security -->
+
+              <!-- Developer panel (hidden until owner unlocks) -->
+              <div class="settings-panel" id="settings-panel-developer" hidden>
+            <div class="settings-group" id="settings-group-devconsole">
               <div class="settings-group-header">
                 <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                 <span class="settings-group-title">Developer Console</span>
@@ -1102,7 +1169,10 @@
               </div>
             </div>
 
-            <!-- Danger zone -->
+              </div><!-- /settings-panel-developer -->
+
+              <!-- Danger panel -->
+              <div class="settings-panel" id="settings-panel-danger">
             <div class="settings-group settings-group--danger">
               <div class="settings-group-header">
                 <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1119,7 +1189,11 @@
               </div>
             </div>
 
-          </div>
+              </div><!-- /settings-panel-danger -->
+
+            </div><!-- /settings-panels -->
+
+          </div><!-- /settings-shell -->
 
           <!-- About / TFG CO -->
           <div class="settings-group settings-about-group">
@@ -1248,6 +1322,7 @@
   <script type="module" src="js/messages/messages.js"></script>
   <script type="module" src="js/friends/friends.js"></script>
   <!-- New feature modules -->
+  <script type="module" src="js/achievements.js"></script>
   <script type="module" src="js/notifications.js"></script>
   <script type="module" src="js/context-menu.js"></script>
   <script type="module" src="js/user-profile-modal.js"></script>
