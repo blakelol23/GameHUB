@@ -8,7 +8,8 @@
  */
 async function generateQuiz(topic) {
     // To change the key, base64-encode your Groq API key and replace the string below.
-    const KEY = atob('Z3NrXzkydWl4cFRNTzJKQWVsS2ppZTY2V0dkeWIzRllzdmJvUlZhU2RTTmxCb09wb1BrYjI3aTk=');
+    // Note: this is a separate key from the TFG-AI chatbot key (rate-limit isolation).
+    const KEY = atob('Z3NrXzhUTDh1cmZHQnlSU2h5YTJPUjNGV0dkeWIzRllhellnWldGOXZyS1YweDVSeHpobzQ1QTQ=');
   const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
   const model = 'llama-3.1-8b-instant';
 

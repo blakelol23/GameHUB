@@ -78,13 +78,15 @@ GameHUB is a private, social gaming platform built by TFG CO (The Floor Guys Co.
 ---
 
 ## AI Chatbot (TFG-AI)
-- **Powered by Groq Llama 3 (8B Instant)**
+- **Powered by Groq Llama 3 (8B Instant)** with optional vision support
+- **Vision images:** Users can upload images; chatbot sends them to a Groq vision model. If the vision model is deprecated or inaccessible the system automatically falls back to the text-only model and flattens any image history to text.
 - **System prompt includes:**
   - TFG CO lore (not a real flooring company)
   - Project history (School Messenger, AIOE, GameHUB)
   - Rules: never claim to be a founder/human, always refer to Blake and Sam as co-founders
   - Mental health disclaimer
 - **Features:**
+  - Image attachment & preview
   - Preset prompt chips
   - Consent dialogs for actions
   - Panel switching and friend add via AI

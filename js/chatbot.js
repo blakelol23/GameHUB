@@ -315,6 +315,21 @@ export async function sendMessage(text) {
     const model = hasVision ? VISION_MODEL : MODEL;
 
     async function doFetch(modelToUse) {
+      // build message list, sanitizing arrays if we fall back to text model
+      let messages;
+      if (modelToUse === MODEL) {
+        messages = [{ role: 'system', content: buildSystemPrompt() }];
+        _history.forEach(m => {
+          if (Array.isArray(m.content)) {
+            const texts = m.content.filter(c => c.type === 'text' && typeof c.text === 'string').map(c => c.text);
+            messages.push({ role: m.role, content: texts.join(' ') });
+          } else {
+            messages.push(m);
+          }
+        });
+      } else {
+        messages = [{ role: 'system', content: buildSystemPrompt() }, ..._history];
+      }
       const r = await fetch(ENDPOINT, {
         method : 'POST',
         headers: {
@@ -323,7 +338,7 @@ export async function sendMessage(text) {
         },
         body: JSON.stringify({
           model: modelToUse,
-          messages   : [{ role: 'system', content: buildSystemPrompt() }, ..._history],
+          messages   : messages,
           max_tokens : 1024,
           temperature: 0.75
         })
