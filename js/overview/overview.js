@@ -14,6 +14,10 @@ const COLOR_MAP = {
   gold  : '#f5a623', red   : '#ff4d6a', white : '#e8ecf8',
 };
 
+const ROLE_DISPLAY = {
+  owner: 'Owner', admin: 'Admin', mod: 'Mod', tester: 'Tester',
+};
+
 let _sessionStart = null;
 let _sessionTimer  = null;
 let _unsubFriends  = null;
@@ -73,9 +77,9 @@ function _populateHero(uid, profile) {
   }
 
   const role = profile?.role ?? null;
-  if (role && role !== 'USER' && badgeEl) {
-    badgeEl.textContent  = role;
-    badgeEl.dataset.role = role.toLowerCase();
+  if (role && role !== 'user' && badgeEl) {
+    badgeEl.textContent  = ROLE_DISPLAY[role] ?? role;
+    badgeEl.dataset.role = role;
     badgeEl.hidden       = false;
   }
 }
@@ -112,13 +116,17 @@ function _startFriendsListener(uid) {
           get(ref(db, `users/${fuid}/username`)),
           get(ref(db, `users/${fuid}/avatarColor`)),
           get(ref(db, `users/${fuid}/avatarPhoto`)),
-          get(ref(db, `users/${fuid}/role`)),
+          get(ref(db, `roles/${fuid}`)),        // authoritative roles path
         ]);
         const pres = presSnap.val();
         const rawGame = pres?.game ?? null;
         // Discard stale game entries (> 4 hours old) in case close wasn't fired
         const game = rawGame && (Date.now() - (rawGame.since ?? 0)) < 4 * 3600_000
           ? rawGame : null;
+        const rv   = roleSnap.val();
+        const role = rv
+          ? (typeof rv === 'string' ? rv.toLowerCase() : (rv?.role?.toLowerCase() ?? null))
+          : null;
         return {
           uid        : fuid,
           online     : pres?.status === 'online',
@@ -126,7 +134,7 @@ function _startFriendsListener(uid) {
           username   : unSnap.val()    ?? 'Unknown',
           avatarColor: colSnap.val()   ?? 'cyan',
           avatarPhoto: photoSnap.val() ?? null,
-          role       : roleSnap.val()  ?? null,
+          role,
         };
       } catch {
         return { uid: fuid, online: false, game: null, username: '?', avatarColor: 'cyan', avatarPhoto: null, role: null };
@@ -154,8 +162,8 @@ function _renderOnlineList(list) {
     const col    = COLOR_MAP[f.avatarColor] ?? COLOR_MAP.cyan;
     const letter = (f.username || '?')[0].toUpperCase();
     const photo  = f.avatarPhoto ? `<img class="ov-fav-img" src="${_esc(f.avatarPhoto)}" alt="" />` : '';
-    const badge  = f.role && f.role !== 'USER'
-      ? `<span class="msg-role-badge" data-role="${f.role.toLowerCase()}">${f.role}</span>` : '';
+    const badge  = f.role && f.role !== 'user'
+      ? `<span class="msg-role-badge" data-role="${f.role}">${ROLE_DISPLAY[f.role] ?? f.role}</span>` : '';
     const sub = f.game
       ? `<span class="ov-friend-sub ov-friend-sub--game">🎮 ${_esc(f.game.title)}</span>`
       : `<span class="ov-friend-sub"><span class="ov-dot ov-dot--on"></span> Online</span>`;
@@ -202,8 +210,8 @@ function _renderNowPlayingPanel(playingList) {
     const col    = COLOR_MAP[f.avatarColor] ?? COLOR_MAP.cyan;
     const letter = (f.username || '?')[0].toUpperCase();
     const photo  = f.avatarPhoto ? `<img class="ov-fav-img" src="${_esc(f.avatarPhoto)}" alt="" />` : '';
-    const badge  = f.role && f.role !== 'USER'
-      ? `<span class="msg-role-badge" data-role="${f.role.toLowerCase()}">${f.role}</span>` : '';
+    const badge  = f.role && f.role !== 'user'
+      ? `<span class="msg-role-badge" data-role="${f.role}">${ROLE_DISPLAY[f.role] ?? f.role}</span>` : '';
     const elapsed = f.game?.since
       ? _timeAgo(f.game.since)
       : '';

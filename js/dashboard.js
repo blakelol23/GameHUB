@@ -107,6 +107,20 @@ async function populateUser(user) {
     profile = snap.exists() ? snap.val() : null;
   } catch (_) {}
 
+  // Load role from authoritative /roles path (server-controlled, never user-writable)
+  try {
+    const roleSnap = await get(ref(db, `roles/${user.uid}`));
+    const rv  = roleSnap.exists() ? roleSnap.val() : null;
+    const role = rv
+      ? (typeof rv === 'string' ? rv.toLowerCase() : (rv?.role?.toLowerCase() ?? 'user'))
+      : 'user';
+    if (profile) profile.role = role;
+    else profile = { role };
+  } catch (_) {
+    if (profile && !profile.role) profile.role = 'user';
+    else if (!profile) profile = { role: 'user' };
+  }
+
   const displayName = profile?.username ?? user.displayName ?? 'Operator';
 
   // Topbar greeting

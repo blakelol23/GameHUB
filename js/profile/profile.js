@@ -8,7 +8,7 @@
  */
 
 import { auth, db }         from '../auth.js';
-import { ref, get, update } from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js';
+import { ref, update }      from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js';
 import { setNotifyPresence } from '../notifications.js';
 
 // ── Colour presets ─────────────────────────────────────────────
@@ -45,7 +45,7 @@ let _profile     = null;
 let _saveTimeout = null;
 
 // ── Init: called when dashboard:user-ready fires ───────────────
-window.addEventListener('dashboard:user-ready', async ({ detail: { user, profile } }) => {
+window.addEventListener('dashboard:user-ready', ({ detail: { user, profile } }) => {
   _uid     = user.uid;
   _profile = profile ?? {};
   _renderColorPicker();
@@ -53,15 +53,12 @@ window.addEventListener('dashboard:user-ready', async ({ detail: { user, profile
   _applyProfile();
   _bindEditing();
   _bindAvatarUpload();
-  // Load role from /roles/{uid} (Firebase Console-controlled, client read-only)
-  try {
-    const roleSnap = await get(ref(db, `roles/${user.uid}`));
-    const role = roleSnap.exists() ? (roleSnap.val()?.role ?? roleSnap.val()) : (_profile.role ?? 'user');
-    _applyRole(role);
-    window.__userRole = role;
-  } catch (_) {
-    _applyRole(_profile.role ?? 'user');
-  }
+  // Role is loaded by dashboard.js from the authoritative /roles/{uid} path
+  // and injected into profile.role before dispatching dashboard:user-ready.
+  // We just apply it — no extra fetch needed, no client spoofing possible.
+  const role = (_profile.role ?? 'user').toLowerCase();
+  _applyRole(role);
+  window.__userRole = role;
 });
 
 // ── Apply loaded profile data to UI ───────────────────────────

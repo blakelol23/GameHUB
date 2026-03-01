@@ -7,7 +7,7 @@
         "username"    : { ".read": "auth != null" },
         "avatarColor" : { ".read": "auth != null" },
         "avatarPhoto" : { ".read": "auth != null" },
-        "role"        : { ".read": "auth != null" },
+        "role"        : { ".read": "auth != null", ".validate": "false" },
         "bio"         : { ".read": "auth != null" },
         "createdAt"   : { ".read": "auth != null" }
       }
@@ -87,9 +87,9 @@
     },
 
     "roles": {
+      ".read" : "auth != null",
       "$uid": {
-        ".read" : "auth != null && auth.uid == $uid",
-        ".write": "auth != null && root.child('roles').child(auth.uid).val() === 'OWNER'"
+        ".write": "auth != null && (root.child('roles').child(auth.uid).val() === 'owner' || root.child('roles').child(auth.uid).val() === 'admin' || root.child('roles').child(auth.uid).child('role').val() === 'owner')"
       }
     },
 
