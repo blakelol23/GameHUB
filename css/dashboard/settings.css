@@ -95,6 +95,64 @@
   border-color: rgba(255, 77, 106, 0.2);
 }
 
+/* ── About / TFG CO branding group ───────────────── */
+.settings-about-group {
+  border : none;
+  background: none;
+  padding: 0;
+  margin-top: 4px;
+}
+.settings-about-card {
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+  gap           : 6px;
+  padding       : 24px 20px 20px;
+  border-radius : 10px;
+  border        : 1px solid var(--dash-border);
+  background    : var(--dash-surface2);
+  text-align    : center;
+}
+.settings-about-logo {
+  width        : 44px;
+  height       : 44px;
+  object-fit   : contain;
+  border-radius: 10px;
+  opacity      : 0.82;
+  margin-bottom: 4px;
+}
+.settings-about-title {
+  font-size     : 15px;
+  font-weight   : 700;
+  letter-spacing: 0.12em;
+  color         : var(--dash-text);
+  text-transform: uppercase;
+}
+.settings-about-sub {
+  font-size     : 11px;
+  letter-spacing: 0.06em;
+  color         : var(--dash-accent);
+  font-family   : var(--font-mono);
+}
+.settings-about-divider {
+  width     : 40px;
+  height    : 1px;
+  background: var(--dash-border);
+  margin    : 4px 0;
+}
+.settings-about-credits {
+  font-size : 11px;
+  color     : var(--dash-text-dim);
+}
+.settings-about-copy {
+  font-size     : 9px;
+  font-family   : var(--font-mono);
+  letter-spacing: 0.06em;
+  color         : rgba(var(--dash-text-dim-rgb, 120,130,150), 0.5);
+  color         : rgba(120, 130, 155, 0.45);
+  margin-top    : 2px;
+}
+
 .settings-group--danger .settings-group-header {
   border-bottom-color: rgba(255, 77, 106, 0.15);
 }

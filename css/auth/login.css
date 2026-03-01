@@ -221,6 +221,28 @@
   max-width: 260px;
 }
 
+/* TFG CO credit tag under tagline */
+.ls-brand-tfg {
+  display    : flex;
+  align-items: center;
+  gap        : 7px;
+  margin-top : 14px;
+  opacity    : 0.45;
+}
+.ls-brand-tfg-logo {
+  width     : 18px;
+  height    : 18px;
+  object-fit: contain;
+  filter    : brightness(0.9);
+}
+.ls-brand-tfg-text {
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color         : rgba(0, 212, 255, 0.8);
+}
+
 /* Vertical divider glow */
 .ls-edge-line {
   position: absolute;
@@ -1029,6 +1051,37 @@
   color      : rgba(180, 190, 215, 0.48);
   line-height: 1.8;
   margin     : 0;
+}
+
+/* MADE BY block */
+.info-ol-madeby {
+  display    : flex;
+  align-items: center;
+  gap        : 12px;
+}
+.info-ol-tfg-logo {
+  width        : 32px;
+  height       : 32px;
+  object-fit   : contain;
+  border-radius: 6px;
+  opacity      : 0.75;
+  flex-shrink  : 0;
+}
+.info-ol-madeby-text {
+  display       : flex;
+  flex-direction: column;
+  gap           : 3px;
+}
+.info-ol-madeby-name {
+  font-size     : 12px;
+  font-weight   : 600;
+  letter-spacing: 0.06em;
+  color         : rgba(205, 220, 240, 0.8);
+}
+.info-ol-madeby-sub {
+  font-size     : 10px;
+  letter-spacing: 0.04em;
+  color         : rgba(180, 190, 215, 0.42);
 }
 
 /* Early-access badge */

@@ -296,6 +296,47 @@
   flex-shrink: 0;
 }
 
+/* TFG CO branding chip inside sidebar footer */
+.dash-sidebar-tfg {
+  display       : flex;
+  align-items   : center;
+  gap           : 9px;
+  padding       : 8px 12px;
+  margin-bottom : 4px;
+  border-radius : 6px;
+  opacity       : 0.38;
+  user-select   : none;
+  pointer-events: none;
+  overflow      : hidden;
+  transition    : opacity 0.2s;
+}
+.dash-sidebar-tfg:hover { opacity: 0.55; }
+.dash-sidebar-tfg-logo {
+  width     : 16px;
+  height    : 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.dash-sidebar-tfg-text {
+  font-family   : var(--font-mono);
+  font-size     : 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color         : var(--dash-accent);
+  white-space   : nowrap;
+  overflow      : hidden;
+  max-width     : 160px;
+  transition    : opacity 0.25s, max-width 0.28s;
+}
+#dashboard-screen.sidebar-collapsed .dash-sidebar-tfg {
+  justify-content: center;
+  padding        : 8px 0;
+}
+#dashboard-screen.sidebar-collapsed .dash-sidebar-tfg-text {
+  opacity  : 0;
+  max-width: 0;
+}
+
 .dash-nav-item--logout {
   color: rgba(255, 77, 106, 0.65);
 }
