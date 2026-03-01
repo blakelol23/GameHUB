@@ -287,6 +287,43 @@
   opacity: 0.45;
 }
 
+/* ── TFG CO corner brand (top-left of login/register right panel) ── */
+.auth-corner-brand {
+  position      : absolute;
+  top           : 20px;
+  left          : 24px;
+  display       : flex;
+  align-items   : center;
+  gap           : 9px;
+  z-index       : 10;
+  pointer-events: none;
+  user-select   : none;
+}
+.auth-corner-brand-logo {
+  width        : 22px;
+  height       : 22px;
+  object-fit   : contain;
+  opacity      : 0.82;
+  flex-shrink  : 0;
+  border-radius: 5px;
+}
+.auth-corner-brand-text {
+  font-family   : var(--font-mono);
+  font-size     : 11px;
+  font-weight   : 600;
+  letter-spacing: 0.07em;
+  background    : linear-gradient(90deg, #00d4ff 0%, #ff4d8c 50%, #00d4ff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation     : tfg-flow 3.5s linear infinite;
+}
+@keyframes tfg-flow {
+  0%   { background-position: 0%   50%; }
+  100% { background-position: 200% 50%; }
+}
+
 /* ── Terminal panel ─────────────────────────────── */
 .ls-terminal {
   position: relative;
