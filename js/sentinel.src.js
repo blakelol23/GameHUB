@@ -153,6 +153,142 @@
   W.addEventListener('snl:fail', function(e) { logEvent(FAIL_TOKEN, (e && e.detail) || null); });
   W.addEventListener('snl:ok',   function()  { clearState(); });
 
+  // ── Sentinel warning popup ────────────────────────────────────────────────
+  // Shows a prominent modal overlay regardless of what page is active.
+  // duration 0 = user must click ACKNOWLEDGE to dismiss.
+  function _showSentinelWarning(title, subtitle, body, color, duration) {
+    color    = color    || '#f5a623';
+    duration = (duration === undefined) ? 6000 : duration;
+
+    // inject keyframe CSS once
+    if (!D.getElementById('snl-kf')) {
+      var sty = D.createElement('style');
+      sty.id = 'snl-kf';
+      sty.textContent = '@keyframes snl-pulse{0%,100%{opacity:1}50%{opacity:.25}}' +
+                        '@keyframes snl-fadein{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}';
+      D.head.appendChild(sty);
+    }
+
+    var prev = D.getElementById('snl-warning-overlay');
+    if (prev) prev.remove();
+
+    var overlay = D.createElement('div');
+    overlay.id = 'snl-warning-overlay';
+    overlay.style.cssText = [
+      'position:fixed','inset:0','z-index:2147483646',
+      'background:rgba(0,0,0,.82)',
+      'display:flex','align-items:center','justify-content:center',
+      'backdrop-filter:blur(10px)','-webkit-backdrop-filter:blur(10px)',
+      "font-family:'Courier New',monospace",
+      'opacity:0','transition:opacity .3s ease',
+    ].join(';');
+
+    var panel = D.createElement('div');
+    panel.style.cssText = [
+      'background:#04040f',
+      'border:1px solid '+color,
+      'border-radius:8px',
+      'width:min(90vw,480px)',
+      'overflow:hidden',
+      'box-shadow:0 0 80px '+color+'40,0 0 160px '+color+'18',
+      'animation:snl-fadein .35s ease forwards',
+    ].join(';');
+
+    // ── title bar
+    var hdr = D.createElement('div');
+    hdr.style.cssText = [
+      'padding:13px 18px 11px',
+      'border-bottom:1px solid '+color+'30',
+      'background:'+color+'10',
+      'display:flex','align-items:center','gap:10px',
+    ].join(';');
+    var dot = D.createElement('span');
+    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:'+color+
+                        ';box-shadow:0 0 8px '+color+';flex-shrink:0;animation:snl-pulse 1.2s infinite;';
+    var hdrTxt = D.createElement('span');
+    hdrTxt.textContent = '\u2593\u2593 SENTINEL v2 \u2593\u2593 \u2014 SECURITY ALERT';
+    hdrTxt.style.cssText = 'color:'+color+';font-size:10px;letter-spacing:.18em;text-shadow:0 0 10px '+color+'80;';
+    hdr.appendChild(dot); hdr.appendChild(hdrTxt);
+    panel.appendChild(hdr);
+
+    // ── body
+    var bdy = D.createElement('div');
+    bdy.style.cssText = 'padding:24px 22px 18px;';
+
+    var ttEl = D.createElement('div');
+    ttEl.textContent = title;
+    ttEl.style.cssText = 'color:'+color+';font-size:15px;font-weight:bold;letter-spacing:.07em;'+
+                         'text-shadow:0 0 14px '+color+'80;margin-bottom:7px;';
+
+    var stEl = D.createElement('div');
+    stEl.textContent = subtitle;
+    stEl.style.cssText = 'color:rgba(255,255,255,.88);font-size:12px;letter-spacing:.03em;margin-bottom:14px;';
+
+    var bdEl = D.createElement('div');
+    bdEl.textContent = body;
+    bdEl.style.cssText = [
+      'color:rgba(255,255,255,.48)',
+      'font-size:10px','letter-spacing:.025em','line-height:1.75',
+      'border-left:2px solid '+color+'35',
+      'padding-left:10px',
+    ].join(';');
+
+    bdy.appendChild(ttEl); bdy.appendChild(stEl); bdy.appendChild(bdEl);
+    panel.appendChild(bdy);
+
+    // ── actions
+    var act = D.createElement('div');
+    act.style.cssText = 'padding:0 22px 18px;display:flex;justify-content:flex-end;';
+
+    var ack = D.createElement('button');
+    ack.textContent = 'ACKNOWLEDGE';
+    ack.style.cssText = [
+      'background:'+color+'15',
+      'border:1px solid '+color+'55',
+      'color:'+color,
+      "font-family:'Courier New',monospace",
+      'font-size:10px','letter-spacing:.12em',
+      'padding:9px 20px','border-radius:4px',
+      'cursor:pointer','transition:background .15s',
+    ].join(';');
+    ack.onmouseover = function() { ack.style.background = color+'30'; };
+    ack.onmouseout  = function() { ack.style.background = color+'15'; };
+    ack.onclick = dismiss;
+
+    act.appendChild(ack);
+    panel.appendChild(act);
+    overlay.appendChild(panel);
+    D.body.appendChild(overlay);
+
+    requestAnimationFrame(function() { overlay.style.opacity = '1'; });
+
+    var _t = duration ? setTimeout(dismiss, duration) : null;
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) dismiss(); });
+
+    function dismiss() {
+      if (_t) clearTimeout(_t);
+      overlay.style.opacity = '0';
+      setTimeout(function() { if (overlay.parentNode) overlay.remove(); }, 350);
+    }
+  }
+
+  // ── Lockout warning (fires on real lockouts AND test presets) ─────────────
+  W.addEventListener('snl:lockout', function(e) {
+    var d    = (e && e.detail) || {};
+    var ms   = d.remain || d.remaining || 36e4;
+    var mins = Math.ceil(ms / 60000);
+    var lvl  = d.level || 1;
+    var clr  = lvl >= 3 ? '#ff4080' : lvl === 2 ? '#ff6b35' : '#f5a623';
+    _showSentinelWarning(
+      'ACCOUNT LOCKED \u2014 LEVEL ' + lvl,
+      'Too many failed login attempts.',
+      'Access has been temporarily blocked for ' + mins + ' minute' + (mins !== 1 ? 's' : '') + '. ' +
+      'Further violations will escalate the lockout duration. Please wait for the timer to expire before trying again.',
+      clr,
+      0  // user must acknowledge
+    );
+  });
+
   // ══════════════════════════════════════════════════════════════════════════
   // TEST CONSOLE   Ctrl + Shift + S
   // ══════════════════════════════════════════════════════════════════════════
@@ -193,6 +329,13 @@
         W.dispatchEvent(new CustomEvent('snl:fail', {
           detail: { code: 'auth/wrong-password', test: true }
         }));
+        _showSentinelWarning(
+          'AUTH FAILURE LOGGED',
+          'Invalid credentials were entered.',
+          'This failed attempt has been recorded and timestamped. ' +
+          (CFG.maxFail - 1) + ' more failures within the rolling window will trigger an automatic account lockout.',
+          '#00d4ff', 6000
+        );
       }
     },
     {
@@ -202,22 +345,57 @@
         W.dispatchEvent(new CustomEvent('snl:fail', {
           detail: { code: 'honeypot', test: true }
         }));
+        _showSentinelWarning(
+          'HONEYPOT TRIGGERED',
+          'Automated bot behavior detected.',
+          'A hidden decoy input field was filled that no legitimate user would interact with. ' +
+          'This is a strong indicator of an automated script or bot. The request has been flagged and logged.',
+          '#a855f7', 6000
+        );
       }
     },
     {
       label: 'Rate Probe  (rapid submit)',
       color: '#44dd88',
-      fn: function() { logEvent('rp', { d: 80, test: true }); }
+      fn: function() {
+        logEvent('rp', { d: 80, test: true });
+        _showSentinelWarning(
+          'RATE ANOMALY FLAGGED',
+          'Suspiciously rapid form submission detected.',
+          'Submission timing of 80ms falls far outside normal human input ranges (threshold: ' +
+          CFG.rateMin + 'ms). This pattern is consistent with automated tooling. ' +
+          'The event has been recorded to the security log.',
+          '#44dd88', 6000
+        );
+      }
     },
     {
       label: 'DevTools Detected',
       color: '#44dd88',
-      fn: function() { logEvent('dt', { dw: 320, dh: 0, test: true }); }
+      fn: function() {
+        logEvent('dt', { dw: 320, dh: 0, test: true });
+        _showSentinelWarning(
+          'DEVTOOLS DETECTED',
+          'Browser developer tools appear to be open.',
+          'An unusual viewport width delta of +320px was detected — consistent with the DevTools panel docked to the browser. ' +
+          'This activity has been silently logged for review.',
+          '#44dd88', 6000
+        );
+      }
     },
     {
       label: 'URL Patrol  (leaked creds)',
       color: '#a855f7',
-      fn: function() { logEvent('url_patrol', { leaked: true, test: true }); }
+      fn: function() {
+        logEvent('url_patrol', { leaked: true, test: true });
+        _showSentinelWarning(
+          'CREDENTIAL LEAK INTERCEPTED',
+          'Sensitive data was detected in the page URL.',
+          'Email and/or password fields were present as URL query parameters — a critical security exposure. ' +
+          'The credentials have been automatically scrubbed from the URL via history.replaceState() and this incident has been logged.',
+          '#a855f7', 6000
+        );
+      }
     },
   ];
 
@@ -355,9 +533,8 @@
       };
       btn.onclick = function() {
         p.fn();
-        _showTestAlert('Fired: ' + p.label);
         btn.style.background = p.color + '44';
-        setTimeout(closeConsole, 280);
+        setTimeout(closeConsole, 200);
       };
       grid.appendChild(btn);
     });
@@ -419,9 +596,9 @@
     function fire() {
       var msg = inp.value.trim();
       if (!msg) { inp.style.borderColor = '#ff4080'; setTimeout(function() { inp.style.borderColor = 'rgba(0,212,255,.25)'; }, 800); return; }
-      _showTestAlert(msg);
+      _showSentinelWarning('\u25e0 SENTINEL ALERT \u25e0', 'Custom test message fired from test console.', msg, '#f5a623', 6000);
       fireBtn.style.background = 'rgba(245,166,35,.45)';
-      setTimeout(closeConsole, 280);
+      setTimeout(closeConsole, 200);
     }
 
     customRow.appendChild(inp);
