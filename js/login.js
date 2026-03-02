@@ -807,20 +807,25 @@ infoClose.addEventListener('click', _closeInfoOverlay);
 // ════════════════════════════════════════════════════════════
 
 // ── 1. Globe (heroCanvas) clicks ─────────────────────────────
-// Each click shows a cryptic terminal message; milestones
-// trigger warp speed,  confetti, and matrix-green filter.
+// Each click shows a funny message; milestones trigger warp
+// speed, confetti, and a goofy colour filter.
 {
   const GLOBE_MSGS = [
-    ['> ANOMALY DETECTED IN SECTOR 7…',  '#00d4ff'],
-    ['> SIGNAL LOCKED ON.',               '#7b2df8'],
-    ['> WARP DRIVE ENGAGED.',             '#f5a623'],
-    ['> THEY ARE WATCHING.',              '#ff4080'],
-    ['> MAXIMUM CLASSIFIED BREACH.',      '#44dd88'],
-    ['> U FOUND IT. LEGEND. 🛸',          '#f5a623'],
+    ['bro why are you clicking me',          '#00d4ff'],
+    ['ok that’s twice. interesting choice.',  '#7b2df8'],
+    ["i'm literally just a spinning ball 💀",  '#f5a623'],
+    ['please. i have a family.',              '#ff4080'],
+    ['ok fine here’s some confetti 🎊',       '#44dd88'],
+    ['you “completed” the globe. congrats. 🌍', '#f5a623'],
   ];
   let _gc = 0;
+  let _gcLast = 0; // per-click time gate — min 350 ms between registering clicks
 
   heroCanvas.addEventListener('click', e => {
+    const now = Date.now();
+    if (now - _gcLast < 350) return; // ignore rapid spam clicks
+    _gcLast = now;
+
     _gc++;
     const [msg, col] = GLOBE_MSGS[Math.min(_gc - 1, GLOBE_MSGS.length - 1)];
     eeToast(msg, col);
@@ -834,7 +839,7 @@ infoClose.addEventListener('click', _closeInfoOverlay);
 
     // Milestone: 5th click → confetti burst from globe centre
     if (_gc === 5) {
-      const r    = heroCanvas.getBoundingClientRect();
+      const r     = heroCanvas.getBoundingClientRect();
       const isMob = window.innerWidth <= 768;
       eeConfetti(
         r.left + r.width  * (isMob ? 0.50 : 0.52),
@@ -843,12 +848,12 @@ infoClose.addEventListener('click', _closeInfoOverlay);
       );
     }
 
-    // Milestone: 7th click → matrix green CSS filter for 3 s
+    // Milestone: 7th click → funky colour flash + message, then counter resets
     if (_gc >= 7) {
       _gc = 0;
       heroCanvas.style.transition = 'filter .35s ease';
-      heroCanvas.style.filter     = 'hue-rotate(90deg) saturate(2.2) brightness(1.3)';
-      eeToast('// MATRIX MODE ACTIVATED', '#44dd88', 3200);
+      heroCanvas.style.filter     = 'hue-rotate(260deg) saturate(2.2) brightness(1.2)';
+      eeToast('ok you need to go outside lol', '#a855f7', 3200);
       setTimeout(() => {
         heroCanvas.style.filter = '';
         setTimeout(() => { heroCanvas.style.transition = ''; }, 400);
@@ -915,7 +920,7 @@ infoClose.addEventListener('click', _closeInfoOverlay);
   const dotG = loginCard.querySelector('.t-dot--g');
 
   if (dotR) dotR.addEventListener('click', () => {
-    eeToast('SYSTEM HALT… just kidding. 😄', '#ff4080');
+    eeToast('OW. rude. 🤔', '#ff4080');
     const flash = document.createElement('div');
     flash.style.cssText = [
       'position:fixed', 'inset:0', 'background:#ff0040', 'z-index:199999',
@@ -930,7 +935,7 @@ infoClose.addEventListener('click', _closeInfoOverlay);
   });
 
   if (dotY) dotY.addEventListener('click', () => {
-    eeToast('// SEISMIC ACTIVITY DETECTED', '#f5a623', 2000);
+    eeToast('put down the coffee bro ☕', '#f5a623', 2000);
     const steps = [-5, 5, -4, 4, -3, 3, 0];
     steps.forEach((x, i) => setTimeout(() => {
       loginCard.style.transform = `perspective(900px) translateX(${x}px)`;
@@ -939,7 +944,7 @@ infoClose.addEventListener('click', _closeInfoOverlay);
   });
 
   if (dotG) dotG.addEventListener('click', () => {
-    eeToast('// ZOOMING OUT…', '#44dd88', 1800);
+    eeToast('I GOT SHRUNK 😱', '#44dd88', 1800);
     loginCard.style.transition = 'transform .35s ease';
     loginCard.style.transform  = 'perspective(1400px) scale(.68) translateZ(-90px)';
     setTimeout(() => {

@@ -8,7 +8,7 @@
  * Dashboard-specific eggs (activated via initDashboardEasterEggs()):
  *   • Sidebar logo ×7 rapid clicks  → party mode
  *   • Overview hero avatar ×5 clicks → confetti
- *   • Triple-click breadcrumb title  → CLASSIFIED
+ *   • Triple-click breadcrumb title  → silliness
  *   • Click the "GH" watermark       → confetti + toast
  *   • Triple-click the topbar user   → identity reveal
  */
@@ -17,11 +17,26 @@
 // SHARED UTILITIES (also exported for use in login.js)
 // ════════════════════════════════════════════════════════════
 
-/**
- * Display a terminal-style floating toast notification.
- * Stacks multiple toasts upward so they don't overlap.
- */
-export function eeToast(msg, color = '#00d4ff', ms = 3200) {
+// ── Toast rate-limiting ───────────────────────────────────────────────────────
+// Max 3 toasts visible at once. Min 380 ms between shows.
+// If someone is hammering clicks we wipe the stack and show a "stop that" toast.
+const TOAST_MAX  = 3;
+const TOAST_GAP  = 380;
+let   _toastLast = 0;
+let   _spamHits  = 0;
+let   _spamTimer = null;
+const SPAM_MSGS  = [
+  'hey stop that 😭',
+  'stop that man',
+  'BRO CHILL OUT 💀',
+  "ok you clearly need a hobby lol",
+  "i'm not a button!! (ok i am but still)",
+  'please. i am BEGGING you.',
+  'clicking harder does not help. trust me.',
+];
+let _spamIdx = 0;
+
+function _makeToast(msg, color, ms) {
   // Find current bottom of the highest existing toast
   let baseBottom = 36;
   document.querySelectorAll('.ee-toast').forEach(el => {
@@ -42,7 +57,7 @@ export function eeToast(msg, color = '#00d4ff', ms = 3200) {
     `border:1px solid ${color}`,
     `color:${color}`,
     "font:12px/1 'Courier New',monospace",
-    'letter-spacing:.1em',
+    'letter-spacing:.05em',
     'padding:10px 22px',
     'border-radius:5px',
     'z-index:99999',
@@ -56,17 +71,45 @@ export function eeToast(msg, color = '#00d4ff', ms = 3200) {
   ].join(';');
 
   document.body.appendChild(el);
-
   requestAnimationFrame(() => {
     el.style.opacity = '1';
     el.style.transform = 'translateX(-50%) translateY(0)';
   });
-
   setTimeout(() => {
     el.style.opacity = '0';
     el.style.transform = 'translateX(-50%) translateY(10px)';
     setTimeout(() => el.remove(), 360);
   }, ms);
+}
+
+/**
+ * Display a rate-limited, stack-capped toast notification.
+ * Silently drops if too many are already visible or calls are too rapid.
+ * Spammers get a funny "stop that" message instead.
+ */
+export function eeToast(msg, color = '#00d4ff', ms = 3200) {
+  const now     = Date.now();
+  const visible = document.querySelectorAll('.ee-toast').length;
+
+  if (visible >= TOAST_MAX || now - _toastLast < TOAST_GAP) {
+    // Count spam hits; after 3 rapid drops, clear everything and roast them
+    _spamHits++;
+    clearTimeout(_spamTimer);
+    _spamTimer = setTimeout(() => { _spamHits = 0; }, 1200);
+
+    if (_spamHits >= 3) {
+      _spamHits = 0;
+      document.querySelectorAll('.ee-toast').forEach(el => el.remove());
+      const roast = SPAM_MSGS[_spamIdx % SPAM_MSGS.length];
+      _spamIdx++;
+      _toastLast = now;
+      _makeToast(roast, '#f5a623', 2600);
+    }
+    return;
+  }
+
+  _toastLast = now;
+  _makeToast(msg, color, ms);
 }
 
 /**
@@ -129,7 +172,7 @@ document.addEventListener('keydown', e => {
   if (_ki < KONAMI.length) return;
   _ki = 0;
 
-  eeToast('⬆⬆⬇⬇⬅➡⬅➡ B A  ——  CHEAT ACTIVATED 🕹️', '#f5a623', 4500);
+  eeToast('bro really typed the konami code 💀  respect tho', '#f5a623', 4500);
   eeConfetti(window.innerWidth / 2, window.innerHeight / 2, 150);
 
   // Brief hue-rotate flash
@@ -157,12 +200,12 @@ document.addEventListener('keydown', e => {
   _tbuf = '';
 
   const lines = [
-    '// WELCOME BACK, OPERATOR.',
-    '> ACCESS LEVEL: MAXIMUM',
-    '> ALL SYSTEMS: NOMINAL',
-    '> GOOD LUCK OUT THERE. 🎮',
+    'yeah that’s the app you’re on 🤣',
+    'thanks for spelling it correctly i guess',
+    'ok nerd. welcome.',
+    'you may now proceed to have fun 🎮',
   ];
-  lines.forEach((m, i) => setTimeout(() => eeToast(m, '#44dd88', 3000), i * 680));
+  lines.forEach((m, i) => setTimeout(() => eeToast(m, '#44dd88', 3000), i * 720));
 });
 
 // ════════════════════════════════════════════════════════════
@@ -182,7 +225,7 @@ export function initDashboardEasterEggs() {
       if (n < 7) return;
       n = 0;
 
-      eeToast('🎉  PARTY MODE ACTIVATED  🎉', '#f5a623', 4000);
+      eeToast('🎉  ok ok ok you got it  🎉', '#f5a623', 4000);
       eeConfetti(window.innerWidth / 2, window.innerHeight * 0.25, 160);
 
       const dash = document.getElementById('dashboard-screen');
@@ -200,7 +243,13 @@ export function initDashboardEasterEggs() {
   // ── 2. Overview hero avatar ×5  → snarky messages + confetti ─
   const av = document.getElementById('ov-hero-avatar');
   if (av) {
-    const lines = ['👀', 'Excuse me?', 'Stop. That.', 'LAST WARNING.', 'Fine. 🎉'];
+    const lines = [
+      'hey 👀',
+      'ok stop lol',
+      'i said stop man',
+      "i'm telling blake",
+      'FINE HAVE SOME CONFETTI 🎊',
+    ];
     let n = 0, tid = null;
     av.addEventListener('click', e => {
       n++;
@@ -224,15 +273,15 @@ export function initDashboardEasterEggs() {
       n = 0;
 
       const orig = bc.textContent;
-      bc.textContent = '// CLASSIFIED';
-      bc.style.color = '#ff4080';
-      bc.style.textShadow = '0 0 8px #ff4080';
+      bc.textContent = 'idk man just vibing';
+      bc.style.color = '#f5a623';
+      bc.style.textShadow = '0 0 8px #f5a623';
       setTimeout(() => {
         bc.textContent = orig;
         bc.style.color = '';
         bc.style.textShadow = '';
       }, 2200);
-      eeToast('// THIS SECTION IS CLASSIFIED', '#ff4080', 2800);
+      eeToast("you triple clicked it. for what. 😂", '#f5a623', 2800);
     });
   }
 
@@ -242,7 +291,7 @@ export function initDashboardEasterEggs() {
     wm.style.cursor = 'pointer';
     wm.title = '...';
     wm.addEventListener('click', e => {
-      eeToast('🎮  GAME HUB  //  PLATFORM v2  //  TFG CO', '#7b2df8', 3200);
+      eeToast('you found the secret button. wild honestly 🤔', '#7b2df8', 3200);
       eeConfetti(e.clientX, e.clientY, 55);
     });
   }
@@ -250,8 +299,9 @@ export function initDashboardEasterEggs() {
   // ── 5. Triple-click the operator name in topbar → identity ─
   const opName = document.getElementById('dash-greeting-name');
   if (opName) {
-    const cryptoNames = [
-      'UNIT_7', 'GHOST_PROTOCOL', 'NPC_#0042', 'THE_FLOOR_GUY', 'PLAYER_ONE',
+    const aliases = [
+      'random dude', 'some guy', 'not telling', 'a literal gamer',
+      "the floor guy's guy", 'employee of the month (self-appointed)',
     ];
     let n = 0, tid = null;
     opName.style.cursor = 'default';
@@ -262,7 +312,7 @@ export function initDashboardEasterEggs() {
       if (n < 3) return;
       n = 0;
 
-      const alias = cryptoNames[Math.floor(Math.random() * cryptoNames.length)];
+      const alias = aliases[Math.floor(Math.random() * aliases.length)];
       const orig  = opName.textContent;
       opName.textContent = alias;
       opName.style.color = '#f5a623';
@@ -272,7 +322,7 @@ export function initDashboardEasterEggs() {
         opName.style.color = '';
         opName.style.textShadow = '';
       }, 2500);
-      eeToast(`> ALIAS ASSIGNED: ${alias}`, '#f5a623', 2800);
+      eeToast(`new name just dropped: "${alias}"`, '#f5a623', 2800);
     });
   }
 }
