@@ -519,4 +519,5 @@ onAuthStateChanged(auth, async (user) => {
   // Start inactivity timer once user is confirmed signed in
   _resetInactivity();
   // Init dashboard easter eggs (once per session)
-  if (!window._eeInit) { window._eeInit = true; initDashboardEasterEggs(); });
+  if (!window._eeInit) { window._eeInit = true; initDashboardEasterEggs(); }
+});
