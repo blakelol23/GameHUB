@@ -18,6 +18,7 @@ import { onAuthStateChanged, signOut,
 import { ref, get, set, update, push, onDisconnect,
          serverTimestamp }                           from 'https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js';
 import { setNotifyPresence }                        from './notifications.js';
+import { initDashboardEasterEggs }                   from './easter-eggs.js';
 
 // ── DOM refs ───────────────────────────────────────────────────
 const dashScreen    = document.getElementById('dashboard-screen');
@@ -517,4 +518,5 @@ onAuthStateChanged(auth, async (user) => {
   await populateUser(user);
   // Start inactivity timer once user is confirmed signed in
   _resetInactivity();
-});
+  // Init dashboard easter eggs (once per session)
+  if (!window._eeInit) { window._eeInit = true; initDashboardEasterEggs(); });

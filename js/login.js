@@ -4,6 +4,7 @@
  */
 
 import { loginUser, sendReset, getFriendlyError } from './auth.js';
+import { eeToast, eeConfetti }                      from './easter-eggs.js';
 
 // ── Constants ──────────────────────────────────────────────────
 // ── Canvas / sphere config ─────────────────────────────────────
@@ -800,5 +801,152 @@ function _closeInfoOverlay() {
 
 infoBtn.addEventListener('click', _openInfoOverlay);
 infoClose.addEventListener('click', _closeInfoOverlay);
+
+// ════════════════════════════════════════════════════════════
+// 🥚 LOGIN EASTER EGGS
+// ════════════════════════════════════════════════════════════
+
+// ── 1. Globe (heroCanvas) clicks ─────────────────────────────
+// Each click shows a cryptic terminal message; milestones
+// trigger warp speed,  confetti, and matrix-green filter.
+{
+  const GLOBE_MSGS = [
+    ['> ANOMALY DETECTED IN SECTOR 7…',  '#00d4ff'],
+    ['> SIGNAL LOCKED ON.',               '#7b2df8'],
+    ['> WARP DRIVE ENGAGED.',             '#f5a623'],
+    ['> THEY ARE WATCHING.',              '#ff4080'],
+    ['> MAXIMUM CLASSIFIED BREACH.',      '#44dd88'],
+    ['> U FOUND IT. LEGEND. 🛸',          '#f5a623'],
+  ];
+  let _gc = 0;
+
+  heroCanvas.addEventListener('click', e => {
+    _gc++;
+    const [msg, col] = GLOBE_MSGS[Math.min(_gc - 1, GLOBE_MSGS.length - 1)];
+    eeToast(msg, col);
+
+    // Milestone: 3rd click → warp speed for 3 s
+    if (_gc === 3) {
+      const orig = sphereSpeed;
+      sphereSpeed = SPHERE_CFG.speed * 14;
+      setTimeout(() => { sphereSpeed = orig; }, 3000);
+    }
+
+    // Milestone: 5th click → confetti burst from globe centre
+    if (_gc === 5) {
+      const r    = heroCanvas.getBoundingClientRect();
+      const isMob = window.innerWidth <= 768;
+      eeConfetti(
+        r.left + r.width  * (isMob ? 0.50 : 0.52),
+        r.top  + r.height * (isMob ? 0.50 : 0.44),
+        90
+      );
+    }
+
+    // Milestone: 7th click → matrix green CSS filter for 3 s
+    if (_gc >= 7) {
+      _gc = 0;
+      heroCanvas.style.transition = 'filter .35s ease';
+      heroCanvas.style.filter     = 'hue-rotate(90deg) saturate(2.2) brightness(1.3)';
+      eeToast('// MATRIX MODE ACTIVATED', '#44dd88', 3200);
+      setTimeout(() => {
+        heroCanvas.style.filter = '';
+        setTimeout(() => { heroCanvas.style.transition = ''; }, 400);
+      }, 3200);
+    }
+  });
+}
+
+// ── 2. Draggable login card (grab by the terminal bar) ────────
+// Lets you freely drag the login form around the screen.
+// Drops with a subtle cyan pulse.
+{
+  const bar = loginCard.querySelector('.terminal-bar');
+  let _drag = false, _ox = 0, _oy = 0, _sx = 0, _sy = 0;
+
+  bar.style.cursor = 'grab';
+
+  bar.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    const r = loginCard.getBoundingClientRect();
+
+    // First drag: promote card to fixed positioning
+    if (loginCard.style.position !== 'fixed') {
+      loginCard.style.position   = 'fixed';
+      loginCard.style.margin     = '0';
+      loginCard.style.left       = r.left + 'px';
+      loginCard.style.top        = r.top  + 'px';
+      loginCard.style.transition = 'none';
+    }
+
+    _sx = e.clientX; _sy = e.clientY;
+    _ox = parseFloat(loginCard.style.left) || r.left;
+    _oy = parseFloat(loginCard.style.top)  || r.top;
+    _drag = true;
+    bar.style.cursor           = 'grabbing';
+    loginCard.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('pointermove', e => {
+    if (!_drag) return;
+    loginCard.style.left = (_ox + e.clientX - _sx) + 'px';
+    loginCard.style.top  = (_oy + e.clientY - _sy) + 'px';
+  });
+
+  document.addEventListener('pointerup', () => {
+    if (!_drag) return;
+    _drag = false;
+    bar.style.cursor           = 'grab';
+    loginCard.style.userSelect = '';
+    // Snap-drop pulse
+    loginCard.style.boxShadow = '0 0 0 2px rgba(0,212,255,.55)';
+    setTimeout(() => { loginCard.style.boxShadow = ''; }, 420);
+  });
+}
+
+// ── 3. Terminal dot easter eggs ───────────────────────────────
+//  • Red dot   → fake-shutdown screen flash
+//  • Yellow dot → earthquake card shake
+//  • Green dot  → dramatic zoom-out then snap back
+{
+  const dotR = loginCard.querySelector('.t-dot--r');
+  const dotY = loginCard.querySelector('.t-dot--y');
+  const dotG = loginCard.querySelector('.t-dot--g');
+
+  if (dotR) dotR.addEventListener('click', () => {
+    eeToast('SYSTEM HALT… just kidding. 😄', '#ff4080');
+    const flash = document.createElement('div');
+    flash.style.cssText = [
+      'position:fixed', 'inset:0', 'background:#ff0040', 'z-index:199999',
+      'opacity:0', 'pointer-events:none', 'transition:opacity .1s',
+    ].join(';');
+    document.body.appendChild(flash);
+    requestAnimationFrame(() => { flash.style.opacity = '.16'; });
+    setTimeout(() => {
+      flash.style.opacity = '0';
+      setTimeout(() => flash.remove(), 200);
+    }, 130);
+  });
+
+  if (dotY) dotY.addEventListener('click', () => {
+    eeToast('// SEISMIC ACTIVITY DETECTED', '#f5a623', 2000);
+    const steps = [-5, 5, -4, 4, -3, 3, 0];
+    steps.forEach((x, i) => setTimeout(() => {
+      loginCard.style.transform = `perspective(900px) translateX(${x}px)`;
+    }, i * 75));
+    setTimeout(() => { loginCard.style.transform = ''; }, steps.length * 75 + 80);
+  });
+
+  if (dotG) dotG.addEventListener('click', () => {
+    eeToast('// ZOOMING OUT…', '#44dd88', 1800);
+    loginCard.style.transition = 'transform .35s ease';
+    loginCard.style.transform  = 'perspective(1400px) scale(.68) translateZ(-90px)';
+    setTimeout(() => {
+      loginCard.style.transform = '';
+      setTimeout(() => { loginCard.style.transition = ''; }, 380);
+    }, 1400);
+  });
+}
 
 window.addEventListener('login-screen-ready', init, { once: true });
